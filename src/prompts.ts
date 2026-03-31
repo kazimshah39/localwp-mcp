@@ -12,7 +12,7 @@ export function registerPrompts(server: McpServer) {
         siteName: z
           .string()
           .optional()
-          .describe("Optional Local site name, for example 'woo'."),
+          .describe("Optional Local site name, for example 'example-site'."),
       },
     },
     async ({ siteName }) => {
@@ -48,7 +48,7 @@ export function registerPrompts(server: McpServer) {
       argsSchema: {
         siteName: z
           .string()
-          .describe("Local site name to restore, for example 'woo'."),
+          .describe("Local site name to restore, for example 'example-site'."),
         sourcePath: z
           .string()
           .describe("Path to the .sql file or backup_site directory to restore."),

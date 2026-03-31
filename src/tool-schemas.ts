@@ -8,7 +8,7 @@ export const siteSelectorSchema = {
   siteName: z
     .string()
     .optional()
-    .describe("Optional Local site name, for example 'plovercrm'."),
+    .describe("Optional Local site name, for example 'example-site'."),
 };
 
 export const logScopeSchema = z

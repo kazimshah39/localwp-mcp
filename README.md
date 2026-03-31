@@ -65,7 +65,7 @@ Once published, the simplest MCP config is:
       "command": "npx",
       "args": ["localwp-mcp"],
       "env": {
-        "LOCAL_SITE_NAME": "plovercrm",
+        "LOCAL_SITE_NAME": "example-site",
         "LOCALWP_MCP_PROFILE": "full-access"
       }
     }
@@ -113,10 +113,10 @@ Then point your MCP client at the built entrypoint:
     "localwp": {
       "command": "node",
       "args": [
-        "/Users/your-user/Projects/MCP-Servers/localwp-mcp/dist/index.js"
+        "/path/to/localwp-mcp/dist/index.js"
       ],
       "env": {
-        "LOCAL_SITE_NAME": "plovercrm",
+        "LOCAL_SITE_NAME": "example-site",
         "LOCALWP_MCP_PROFILE": "full-access"
       }
     }

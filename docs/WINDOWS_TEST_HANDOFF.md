@@ -6,7 +6,7 @@ The goal is to validate that `localwp-mcp-toolkit` works end-to-end on Windows w
 
 ## Current Status
 
-- Repo: `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit`
+- Repo: `localwp-mcp`
 - Package manager: `pnpm`
 - Runtime: Node `>= 20`
 - Profiles:
@@ -16,9 +16,7 @@ The goal is to validate that `localwp-mcp-toolkit` works end-to-end on Windows w
   - `13` tools
   - `22` resources
   - `2` prompts
-- Live-tested successfully on macOS against a real LocalWP site:
-  - site name: `woo`
-  - domain: `woo.local`
+- Live-tested successfully on macOS against a real LocalWP site.
 - Already verified on macOS:
   - `pnpm check`
   - `pnpm test`
@@ -39,7 +37,7 @@ One compatibility issue was found during deep testing and already fixed:
 
 If Windows testing fails around schema inspection, first confirm the current code still includes that alias support in:
 
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/src/tools/mysql-schema.ts`
+- `src/tools/mysql-schema.ts`
 
 ## What Must Be Tested On Windows
 
@@ -99,7 +97,7 @@ Before running the full test:
 - Start at least one LocalWP site
 - Know the Local site name, or be ready to read it from `list_local_sites`
 
-If the exact `woo` site is not available on Windows, use any running LocalWP site and substitute that site name everywhere.
+Use any running LocalWP site on Windows and substitute that site name everywhere below.
 
 ## Windows Paths Worth Checking If Something Fails
 
@@ -148,7 +146,7 @@ Use a real LocalWP site.
 
 If needed, start by listing sites through MCP and pick a running one.
 
-For the rest of the checklist below, replace `woo` with the Windows site name if different.
+For the rest of the checklist below, replace `example-site` with the actual Windows site name.
 
 ### 4. Safe Profile Test
 
@@ -156,7 +154,7 @@ Set environment variables:
 
 ```powershell
 $env:LOCALWP_MCP_PROFILE = "safe"
-$env:LOCAL_SITE_NAME = "woo"
+$env:LOCAL_SITE_NAME = "example-site"
 $env:LOCALWP_MCP_BACKUPS_DIR = Join-Path $env:TEMP "localwp-mcp-safe-pre"
 ```
 
@@ -194,7 +192,7 @@ Set environment variables:
 
 ```powershell
 $env:LOCALWP_MCP_PROFILE = "full-access"
-$env:LOCAL_SITE_NAME = "woo"
+$env:LOCAL_SITE_NAME = "example-site"
 $env:LOCALWP_MCP_BACKUPS_DIR = Join-Path $env:TEMP "localwp-mcp-full-pre"
 ```
 
@@ -266,7 +264,7 @@ The next chat should use a real MCP stdio integration harness, not only direct m
 
 The server entrypoint is:
 
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/dist/index.js`
+- `dist/index.js`
 
 The next chat should:
 
@@ -288,11 +286,11 @@ Focus first on:
 
 Relevant code areas:
 
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/src/platform-paths.ts`
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/src/local-sites.ts`
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/src/local-tooling.ts`
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/src/mysql.ts`
-- `/Users/kazim/Projects/MCP-Servers/localwp-mcp-toolkit/src/backup.ts`
+- `src/platform-paths.ts`
+- `src/local-sites.ts`
+- `src/local-tooling.ts`
+- `src/mysql.ts`
+- `src/backup.ts`
 
 ## Final Goal
 

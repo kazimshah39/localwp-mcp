@@ -1,6 +1,6 @@
 {
   "name": "localwp-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A LocalWP-aware MCP server for WordPress developers with simple safe and full-access profiles, logs, doctor diagnostics, SQL access, backups, restore flows, MCP resources/prompts, and site-aware WP-CLI.",
   "type": "module",
   "packageManager": "pnpm@10.32.1",

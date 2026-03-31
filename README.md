@@ -7,6 +7,8 @@ It automatically finds your Local sites, uses the correct Local PHP and MySQL ru
 ## What You Can Do
 
 - inspect Local sites and their runtime details
+- start, stop, and restart Local sites
+- list, read, search, write, and delete files inside a selected Local site
 - run WP-CLI against the correct site
 - query the WordPress database
 - allow full database writes when you want unrestricted local development
@@ -104,6 +106,29 @@ Use:
 - `local_doctor`
 - `local_logs`
 
+### Work With Site Files
+
+Use:
+
+- `list_site_files`
+- `read_site_file`
+- `search_site_files`
+- `write_site_file`
+- `delete_site_file`
+
+These tools are always scoped to the selected site's root directory.
+
+- In `safe`, you can list, read, and search files.
+- In `full-access`, you can also write and delete files.
+
+### Control a Local Site
+
+Use:
+
+- `start_local_site`
+- `stop_local_site`
+- `restart_local_site`
+
 ### Work With WordPress
 
 Use:
@@ -149,10 +174,18 @@ The `full` backup format is folder-based and includes the site's `app`, `conf`, 
 ### Tools
 
 - `list_local_sites`
+- `start_local_site`
+- `stop_local_site`
+- `restart_local_site`
 - `local_environment_check`
 - `local_doctor`
 - `local_logs`
 - `local_site_info`
+- `list_site_files`
+- `read_site_file`
+- `search_site_files`
+- `write_site_file`
+- `delete_site_file`
 - `execute_wp_cli`
 - `mysql_query`
 - `mysql_execute`

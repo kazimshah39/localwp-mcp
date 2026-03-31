@@ -24,3 +24,10 @@ export const backupScopeSchema = z
   .describe(
     "Backup only the database, or create a full Local-style backup with app, conf, logs, and a fresh SQL export.",
   );
+
+export const siteRelativePathSchema = z
+  .string()
+  .min(1)
+  .describe(
+    "Path relative to the selected site's root directory, for example 'app/public/wp-content/themes/my-theme/style.css'.",
+  );

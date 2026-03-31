@@ -13,7 +13,7 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
   - `safe`
   - `full-access`
 - Current feature surface:
-  - `13` tools
+  - `21` tools
   - `22` resources
   - `2` prompts
 - Live-tested successfully on macOS against a real LocalWP site.
@@ -24,6 +24,8 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
   - real MCP stdio integration
   - real WP-CLI access
   - real MySQL access
+  - real Local site start/stop/restart
+  - real site-scoped file access
   - `db_export`
   - `db_import`
   - `backup_site`
@@ -49,21 +51,31 @@ The Windows test must cover:
 2. Real LocalWP site discovery
 3. Real WP-CLI execution
 4. Real MySQL execution
-5. Safe profile restrictions
-6. Full-access profile permissions
-7. Backup/export/import/restore flows
-8. MCP resources
-9. MCP prompts
+5. Real Local site lifecycle control
+6. Real site-scoped file access
+7. Safe profile restrictions
+8. Full-access profile permissions
+9. Backup/export/import/restore flows
+10. MCP resources
+11. MCP prompts
 
 ## Tool Inventory To Validate
 
 These tools should be present:
 
 - `list_local_sites`
+- `start_local_site`
+- `stop_local_site`
+- `restart_local_site`
 - `local_environment_check`
 - `local_site_info`
 - `local_logs`
 - `local_doctor`
+- `list_site_files`
+- `read_site_file`
+- `search_site_files`
+- `write_site_file`
+- `delete_site_file`
 - `execute_wp_cli`
 - `mysql_query`
 - `mysql_execute`
@@ -105,6 +117,7 @@ The code tries to support standard Windows Local paths. If Windows integration f
 
 - `%APPDATA%\Local\sites.json`
 - `%APPDATA%\Local\site-statuses.json`
+- `%APPDATA%\Local\graphql-connection-info.json`
 - `%LOCALAPPDATA%\Programs\Local`
 - `C:\Program Files\Local`
 
@@ -161,10 +174,22 @@ $env:LOCALWP_MCP_BACKUPS_DIR = Join-Path $env:TEMP "localwp-mcp-safe-pre"
 Then validate all of the following through the real MCP stdio server:
 
 - `list_local_sites`
+- `start_local_site`
+  - start a halted site and confirm it becomes reachable
+- `stop_local_site`
+  - stop that site again and confirm it becomes halted
+- `restart_local_site`
+  - restart a running site and confirm it returns to `running`
 - `local_site_info`
 - `local_environment_check`
 - `local_doctor`
 - `local_logs`
+- `list_site_files`
+  - list a directory under the site root
+- `read_site_file`
+  - read a text file from the site
+- `search_site_files`
+  - search for a known string in the site files
 - `execute_wp_cli` with a safe read command like `plugin list --format=json`
 - `execute_wp_cli` with `search-replace --dry-run`
 - `mysql_query`
@@ -182,6 +207,8 @@ These actions should be blocked in `safe`:
 - `mysql_execute`
 - `db_import`
 - `restore_backup`
+- `write_site_file`
+- `delete_site_file`
 - `execute_wp_cli` write commands like `plugin activate`
 - live `search-replace`
 - `execute_wp_cli eval`
@@ -199,10 +226,23 @@ $env:LOCALWP_MCP_BACKUPS_DIR = Join-Path $env:TEMP "localwp-mcp-full-pre"
 Then validate all of the following through the real MCP stdio server:
 
 - `list_local_sites`
+- `start_local_site`
+  - start a halted site and confirm it becomes reachable
+- `stop_local_site`
+  - stop that site again and confirm it becomes halted
+- `restart_local_site`
+  - restart a running site and confirm it returns to `running`
 - `local_site_info`
 - `local_environment_check`
 - `local_doctor`
 - `local_logs`
+- `list_site_files`
+- `read_site_file`
+- `search_site_files`
+- `write_site_file`
+  - create a temporary file under the site root
+- `delete_site_file`
+  - remove that temporary file or directory
 - `execute_wp_cli plugin list --format=json`
 - `execute_wp_cli` write path:
   - create a temporary draft post
@@ -252,6 +292,8 @@ The Windows test report should include:
 - whether Local metadata resolution worked
 - whether WP-CLI worked
 - whether MySQL worked
+- whether Local site lifecycle control worked
+- whether site-scoped file access worked
 - whether `safe` restrictions were enforced correctly
 - whether `full-access` actions succeeded
 - whether backup/export/import/restore succeeded

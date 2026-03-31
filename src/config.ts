@@ -64,6 +64,12 @@ export const config = {
       process.env.LOCAL_APP_SUPPORT_DIR || defaultLocalAppSupportDir,
       "site-statuses.json",
     ),
+  localGraphqlConnectionInfoJson:
+    process.env.LOCAL_GRAPHQL_CONNECTION_INFO ||
+    path.join(
+      process.env.LOCAL_APP_SUPPORT_DIR || defaultLocalAppSupportDir,
+      "graphql-connection-info.json",
+    ),
   localWpCliPharCandidates: process.env.LOCAL_WP_CLI_PHAR
     ? [process.env.LOCAL_WP_CLI_PHAR]
     : getWpCliPharCandidates(platform, localExtraResourcesDirs),

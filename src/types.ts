@@ -84,6 +84,19 @@ export interface SpawnResult {
   timedOut: boolean;
 }
 
+export interface LocalGraphqlConnectionInfo {
+  port: number;
+  authToken: string;
+  url: string;
+  subscriptionUrl?: string;
+}
+
+export interface LocalSiteLifecycleMutationResult {
+  id: string;
+  name: string;
+  status: LocalSiteStatus;
+}
+
 export interface MysqlQueryResult {
   columns: string[];
   rows: Record<string, unknown>[];

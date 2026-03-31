@@ -14,7 +14,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "localwp-mcp": "./dist/index.js"
+    "localwp-mcp": "dist/index.js"
   },
   "files": [
     "dist",

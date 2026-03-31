@@ -1,0 +1,91 @@
+name: Bug report
+description: Report a bug in localwp-mcp
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please include enough detail for us to reproduce it.
+
+  - type: input
+    id: version
+    attributes:
+      label: Package version
+      description: Which version of localwp-mcp are you using?
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - macOS
+        - Windows
+        - Linux
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: profile
+    attributes:
+      label: Access profile
+      options:
+        - safe
+        - full-access
+        - not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: local-setup
+    attributes:
+      label: LocalWP setup
+      description: Tell us the Local site name, whether it was running, and anything relevant about your Local install.
+      placeholder: |
+        Site name: woo
+        Running: yes
+        Local version: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Start Local site
+        2. Run ...
+        3. Call tool ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs or output
+      description: Paste MCP output, tool errors, or excerpts from Local logs if available.
+      render: shell
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Include anything else that may help reproduce or debug the problem.

@@ -15,6 +15,13 @@ It discovers Local sites from Local's own metadata, resolves the correct Local P
 - machine-readable Local diagnostics
 - MCP resources and prompts
 
+## Project Docs
+
+- [Contributing](./CONTRIBUTING.md)
+- [Security Policy](./SECURITY.md)
+- [Release Checklist](./docs/RELEASE_CHECKLIST.md)
+- [Windows Test Handoff](./docs/WINDOWS_TEST_HANDOFF.md)
+
 ## Profiles
 
 The package now has only 2 profiles:
@@ -47,12 +54,58 @@ The package now has only 2 profiles:
 
 ## Quick Setup
 
+### npm
+
+Once published, the simplest MCP config is:
+
+```json
+{
+  "mcpServers": {
+    "localwp": {
+      "command": "npx",
+      "args": ["localwp-mcp"],
+      "env": {
+        "LOCAL_SITE_NAME": "plovercrm",
+        "LOCALWP_MCP_PROFILE": "full-access"
+      }
+    }
+  }
+}
+```
+
+If you want the cautious default instead, set:
+
+```json
+{
+  "LOCALWP_MCP_PROFILE": "safe"
+}
+```
+
+After a global install, you can also use:
+
+```json
+{
+  "mcpServers": {
+    "localwp": {
+      "command": "localwp-mcp",
+      "env": {
+        "LOCALWP_MCP_PROFILE": "safe"
+      }
+    }
+  }
+}
+```
+
+### From Source
+
+If you are running from a local clone:
+
 ```bash
 pnpm install
 pnpm build
 ```
 
-Example MCP config:
+Then point your MCP client at the built entrypoint:
 
 ```json
 {
@@ -68,14 +121,6 @@ Example MCP config:
       }
     }
   }
-}
-```
-
-If you want the cautious default instead, set:
-
-```json
-{
-  "LOCALWP_MCP_PROFILE": "safe"
 }
 ```
 
@@ -176,3 +221,9 @@ pnpm test
 pnpm build
 node dist/index.js
 ```
+
+For contribution and release workflows, see:
+
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [SECURITY.md](./SECURITY.md)
+- [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)

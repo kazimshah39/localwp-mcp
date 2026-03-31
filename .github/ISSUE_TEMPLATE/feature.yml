@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest an improvement for localwp-mcp
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for sharing an idea. Please describe the developer workflow you want to improve.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What is difficult, missing, or awkward today?
+      placeholder: I want the MCP to...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the tool, behavior, or UX you would like.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What do you do today instead?
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Primary area
+      options:
+        - Local site discovery
+        - WP-CLI
+        - MySQL
+        - Backups and restore
+        - Logs and diagnostics
+        - MCP resources or prompts
+        - Docs and onboarding
+        - Cross-platform support
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Additional context
+      description: Screenshots, examples, or links are welcome.

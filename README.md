@@ -212,28 +212,6 @@ Those tools are the fastest way to see whether the problem is:
 - MySQL connectivity
 - missing or stopped Local services
 
-## From Source
-
-If you are running from a local clone instead of npm:
-
-```bash
-pnpm install
-pnpm build
-```
-
-Then point your MCP client at:
-
-```json
-{
-  "mcpServers": {
-    "localwp": {
-      "command": "node",
-      "args": ["/path/to/localwp-mcp/dist/index.js"]
-    }
-  }
-}
-```
-
 ## For Contributors
 
 Contributor and maintainer docs live outside the main user guide:

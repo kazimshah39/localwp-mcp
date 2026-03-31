@@ -116,6 +116,6 @@ Use wording like:
 
 - Supports macOS, Windows, and Linux
 - Live-tested on macOS
-- Windows and Linux support is implemented with platform-aware code, tests, and CI
+- Windows and Linux support is implemented with platform-aware code and tests
 
 Avoid claiming full live verification on every platform until the Windows validation run is complete.

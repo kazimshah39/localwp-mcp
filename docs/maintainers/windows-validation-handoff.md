@@ -298,6 +298,6 @@ After the Windows run, we want to be able to say:
 
 - macOS live-tested
 - Windows live-tested
-- Linux covered by code paths, tests, and CI
+- Linux covered by code paths and tests
 
 That will put this MCP in a much stronger position for public release.

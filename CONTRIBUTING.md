@@ -46,7 +46,7 @@ node dist/index.js
 - `docs/maintainers/`
   release, validation, and maintainer docs
 - `.github/`
-  CI and GitHub community files
+  GitHub community files
 
 ## Changes We Welcome
 

@@ -23,13 +23,13 @@ Supporting docs:
 Minimum release expectation:
 
 - macOS live-tested
-- Windows and Linux covered by tests and CI
+- Windows and Linux covered by tests
 
 Preferred release expectation:
 
 - macOS live-tested
 - Windows live-tested
-- Linux covered by tests and CI
+- Linux covered by tests
 
 If Windows has not been live-tested yet, say that clearly in the release notes.
 

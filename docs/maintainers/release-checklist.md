@@ -4,8 +4,8 @@ Use this checklist when preparing a public release of `localwp-mcp`.
 
 Supporting docs:
 
-- `docs/FIRST_RELEASE.md`
-- `docs/releases/v0.1.0-beta.1.md`
+- `docs/maintainers/first-release.md`
+- `docs/maintainers/releases/v0.1.0-beta.1.md`
 
 ## Before Tagging
 

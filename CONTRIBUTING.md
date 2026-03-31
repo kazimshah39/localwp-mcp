@@ -43,8 +43,8 @@ node dist/index.js
   MCP tool registrations
 - `tests/`
   unit tests
-- `docs/`
-  handoff and release docs
+- `docs/maintainers/`
+  release, validation, and maintainer docs
 - `.github/`
   CI and GitHub community files
 
@@ -112,5 +112,5 @@ Use the process in [SECURITY.md](./SECURITY.md) instead.
 If your change affects installation, configuration, profiles, tools, or platform behavior, please update the relevant docs:
 
 - [README.md](./README.md)
-- [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)
-- [docs/WINDOWS_TEST_HANDOFF.md](./docs/WINDOWS_TEST_HANDOFF.md) when Windows validation steps change
+- [docs/maintainers/release-checklist.md](./docs/maintainers/release-checklist.md)
+- [docs/maintainers/windows-validation-handoff.md](./docs/maintainers/windows-validation-handoff.md) when Windows validation steps change

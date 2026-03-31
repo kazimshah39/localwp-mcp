@@ -39,7 +39,7 @@ Then create a GitHub release for:
 
 Use the release notes draft in:
 
-- `docs/releases/v0.1.0-beta.1.md`
+- `docs/maintainers/releases/v0.1.0-beta.1.md`
 
 ## Option B: Publish `0.1.0`
 

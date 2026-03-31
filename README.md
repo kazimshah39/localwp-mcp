@@ -1,62 +1,21 @@
 # localwp-mcp
 
-`localwp-mcp` is an MCP server for LocalWP projects.
+`localwp-mcp` gives AI agents direct access to LocalWP sites through MCP.
 
-It discovers Local sites from Local's own metadata, resolves the correct Local PHP and MySQL runtimes for each site, and gives AI agents simple access to:
+It automatically finds your Local sites, uses the correct Local PHP and MySQL runtimes for each one, and lets an agent work with WordPress through WP-CLI, MySQL, logs, diagnostics, backups, and restore flows.
 
-- Local site discovery
-- Local logs and doctor-style diagnostics
-- site-aware WP-CLI
-- safe SQL reads
-- full SQL access when you opt into it
-- database export/import
-- Local-friendly backups
-- restore workflows
-- machine-readable Local diagnostics
-- MCP resources and prompts
+## What You Can Do
 
-## Project Docs
+- inspect Local sites and their runtime details
+- run WP-CLI against the correct site
+- query the WordPress database
+- allow full database writes when you want unrestricted local development
+- read recent logs and run site health checks
+- export, import, back up, and restore LocalWP sites
 
-- [Contributing](./CONTRIBUTING.md)
-- [Security Policy](./SECURITY.md)
-- [Release Checklist](./docs/RELEASE_CHECKLIST.md)
-- [Windows Test Handoff](./docs/WINDOWS_TEST_HANDOFF.md)
+## Install
 
-## Profiles
-
-The package now has only 2 profiles:
-
-- `safe`
-  Good default. Read-focused SQL plus safe WP-CLI inspection commands.
-- `full-access`
-  Best for local development when you want the agent to fully work on the site and database.
-
-`safe` is the default.
-
-## Tools
-
-- `list_local_sites`
-- `local_environment_check`
-- `local_doctor`
-- `local_logs`
-- `local_site_info`
-- `backup_site`
-- `db_export`
-- `db_import`
-- `restore_backup`
-- `mysql_query`
-  Safe profile SQL reads only.
-- `mysql_execute`
-  Full-access profile single-statement SQL execution.
-- `mysql_schema`
-  Accepts `table` and also `tableName` as a compatibility alias.
-- `execute_wp_cli`
-
-## Quick Setup
-
-### npm
-
-Once published, the simplest MCP config is:
+Use `npx` in your MCP client:
 
 ```json
 {
@@ -65,23 +24,20 @@ Once published, the simplest MCP config is:
       "command": "npx",
       "args": ["localwp-mcp"],
       "env": {
-        "LOCAL_SITE_NAME": "example-site",
-        "LOCALWP_MCP_PROFILE": "full-access"
+        "LOCALWP_MCP_PROFILE": "safe"
       }
     }
   }
 }
 ```
 
-If you want the cautious default instead, set:
+You can also install it globally:
 
-```json
-{
-  "LOCALWP_MCP_PROFILE": "safe"
-}
+```bash
+npm install -g localwp-mcp
 ```
 
-After a global install, you can also use:
+Then use:
 
 ```json
 {
@@ -96,134 +52,192 @@ After a global install, you can also use:
 }
 ```
 
-### From Source
+If you want the MCP to focus on one site by default, set:
 
-If you are running from a local clone:
+```json
+{
+  "LOCAL_SITE_NAME": "example-site"
+}
+```
+
+## Access Modes
+
+`localwp-mcp` has 2 access modes:
+
+- `safe`
+  Best default for most people. Safe WordPress inspection commands, diagnostics, logs, database reads, and backup/export flows.
+- `full-access`
+  Best when you want the agent to fully work on your local site, including SQL writes, imports, and restore operations.
+
+`safe` is the default.
+
+To enable full local access:
+
+```json
+{
+  "LOCALWP_MCP_PROFILE": "full-access"
+}
+```
+
+## First Things To Try
+
+Start with:
+
+- `local_environment_check`
+- `local_doctor`
+- `list_local_sites`
+
+Those will tell you:
+
+- which Local sites were discovered
+- whether the site is running
+- which Local runtimes were resolved
+- whether WP-CLI and MySQL are reachable
+
+## Common Workflows
+
+### Inspect a Site
+
+Use:
+
+- `local_site_info`
+- `local_doctor`
+- `local_logs`
+
+### Work With WordPress
+
+Use:
+
+- `execute_wp_cli`
+
+Examples:
+
+- list plugins
+- inspect options
+- list posts or users
+- run plugin-specific WP-CLI commands
+
+### Work With the Database
+
+Use:
+
+- `mysql_query`
+  Read-only SQL in `safe`
+- `mysql_execute`
+  Full SQL execution in `full-access`
+- `mysql_schema`
+  Table listing and table description helpers
+
+### Back Up or Restore a Site
+
+Use:
+
+- `backup_site`
+- `db_export`
+- `db_import`
+- `restore_backup`
+
+`backup_site` supports:
+
+- `database`
+- `full`
+
+The `full` backup format is folder-based and includes the site's `app`, `conf`, and `logs` directories plus a fresh SQL dump.
+
+## Built-In Capabilities
+
+### Tools
+
+- `list_local_sites`
+- `local_environment_check`
+- `local_doctor`
+- `local_logs`
+- `local_site_info`
+- `execute_wp_cli`
+- `mysql_query`
+- `mysql_execute`
+- `mysql_schema`
+- `db_export`
+- `db_import`
+- `backup_site`
+- `restore_backup`
+
+### MCP Resources
+
+- `localwp://sites`
+- `localwp://sites/{siteName}/summary`
+- `localwp://sites/{siteName}/doctor`
+- `localwp://sites/{siteName}/logs`
+
+### MCP Prompts
+
+- `diagnose_local_site`
+- `restore_local_site`
+
+## Platform Support
+
+`localwp-mcp` is designed for:
+
+- macOS
+- Windows
+- Linux
+
+It supports both current Local `lightning-services` layouts and older `site-binaries` layouts.
+
+## Useful Environment Variables
+
+Most users only need these:
+
+- `LOCALWP_MCP_PROFILE`
+- `LOCAL_SITE_NAME`
+- `LOCAL_SITE_ID`
+- `LOCALWP_MCP_BACKUPS_DIR`
+
+Advanced override variables also exist for custom Local layouts, but most installations do not need them.
+
+## Troubleshooting
+
+If the MCP does not find your site or cannot run WP-CLI/MySQL:
+
+1. Start the site in Local.
+2. Run `local_environment_check`.
+3. Run `local_doctor`.
+4. Check `local_logs`.
+
+Those tools are the fastest way to see whether the problem is:
+
+- site selection
+- Local metadata resolution
+- WP-CLI resolution
+- MySQL connectivity
+- missing or stopped Local services
+
+## From Source
+
+If you are running from a local clone instead of npm:
 
 ```bash
 pnpm install
 pnpm build
 ```
 
-Then point your MCP client at the built entrypoint:
+Then point your MCP client at:
 
 ```json
 {
   "mcpServers": {
     "localwp": {
       "command": "node",
-      "args": [
-        "/path/to/localwp-mcp/dist/index.js"
-      ],
-      "env": {
-        "LOCAL_SITE_NAME": "example-site",
-        "LOCALWP_MCP_PROFILE": "full-access"
-      }
+      "args": ["/path/to/localwp-mcp/dist/index.js"]
     }
   }
 }
 ```
 
-## Recommended First Command
+## For Contributors
 
-Run `local_environment_check` or `local_doctor` first on any machine. They show:
-
-- resolved Local metadata paths
-- resolved Local app-resource paths
-- WP-CLI/tooling resolution
-- optional WP-CLI and MySQL probes for a selected site
-- log availability and practical next steps
-
-That makes support and cross-platform debugging much easier.
-
-## Backups and Database Transfers
-
-- `backup_site`
-  Creates a backup folder for the selected site.
-- `backup_site` with `scope=database`
-  Creates a timestamped backup folder with a fresh SQL dump.
-- `backup_site` with `scope=full`
-  Copies the site's `app`, `conf`, and `logs` directories and writes a fresh SQL dump into `app/sql`.
-- `db_export`
-  Writes a SQL file directly. Good when you only want the database.
-- `db_import`
-  Imports either a `.sql` file or a `backup_site` directory. Requires `full-access`.
-- `restore_backup`
-  Restores from a `.sql` file or a `backup_site` directory. In `full-access`, it can also restore `app`, `conf`, and `logs` from a full backup.
-
-The full backup is intentionally folder-based instead of shelling out to platform-specific `zip` or `tar` commands. That keeps the MCP predictable across macOS, Windows, and Linux, and it stays close to Local's own site-folder restore shape.
-
-## Resources and Prompts
-
-This MCP now also exposes lightweight resources and prompts:
-
-- Resource: `localwp://sites`
-  JSON catalog of discovered Local sites.
-- Resource template: `localwp://sites/{siteName}/summary`
-  Per-site Local resolution summary.
-- Resource template: `localwp://sites/{siteName}/doctor`
-  Per-site doctor output.
-- Resource template: `localwp://sites/{siteName}/logs`
-  Per-site recent logs.
-- Prompt: `diagnose_local_site`
-  Helps an agent diagnose a LocalWP site with the MCP tools.
-- Prompt: `restore_local_site`
-  Helps an agent restore a site from a SQL dump or backup directory.
-
-## Platform Compatibility
-
-- `macOS`
-  Uses Local metadata under `~/Library/Application Support/Local` and the standard Local app bundle resources.
-- `Windows`
-  Uses Local metadata under `%APPDATA%\\Local` and searches both per-user and `Program Files` installs for Local resources.
-- `Linux`
-  Uses Local metadata under `~/.config/Local` and the common `/opt/Local/resources/extraResources` install path.
-
-The resolver supports both current `lightning-services` layouts and older `site-binaries` layouts.
-
-## Configuration
-
-Optional environment variables:
-
-- `LOCALWP_MCP_PROFILE`
-  `safe` or `full-access`
-- `LOCALWP_MCP_BACKUPS_DIR`
-  Optional shared backup directory. If omitted, backups are written under each Local site's `localwp-mcp-backups` folder.
-- `LOCAL_SITE_NAME`
-- `LOCAL_SITE_ID`
-- `LOCAL_APP_SUPPORT_DIR`
-- `LOCAL_EXTRA_RESOURCES_DIRS`
-- `LOCAL_RUN_DIR`
-- `LOCAL_LIGHTNING_SERVICES_DIR`
-- `LOCAL_LIGHTNING_SERVICES_DIRS`
-- `LOCAL_SITES_JSON`
-- `LOCAL_SITE_STATUSES_JSON`
-- `LOCAL_WP_CLI_PHAR`
-- `LOCAL_WP_CLI_CONFIG`
-- `LOCAL_HELPER_BIN_DIRS`
-- `LOCAL_MYSQL_HOST`
-
-## Why It Stays Simple
-
-- plain TypeScript
-- `pnpm`
-- `tsc`
-- stdio transport
-
-There is no bundler here because this is a Node MCP server and the simpler build is easier to debug and maintain.
-
-## Development
-
-```bash
-pnpm install
-pnpm check
-pnpm test
-pnpm build
-node dist/index.js
-```
-
-For contribution and release workflows, see:
+Contributor and maintainer docs live outside the main user guide:
 
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
 - [SECURITY.md](./SECURITY.md)
-- [docs/RELEASE_CHECKLIST.md](./docs/RELEASE_CHECKLIST.md)
+- [Maintainer Docs](./docs/maintainers/README.md)

@@ -1,8 +1,8 @@
-# Windows Comprehensive Test Handoff
+# Windows Validation Handoff
 
 This file is for the next chat session on a Windows laptop.
 
-The goal is to validate that `localwp-mcp-toolkit` works end-to-end on Windows with a real LocalWP site, not just unit tests.
+The goal is to validate that `localwp-mcp` works end-to-end on Windows with a real LocalWP site, not just unit tests.
 
 ## Current Status
 

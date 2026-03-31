@@ -1,0 +1,61 @@
+{
+  "name": "localwp-mcp",
+  "version": "0.1.0",
+  "description": "A LocalWP-aware MCP server for WordPress developers with simple safe and full-access profiles, logs, doctor diagnostics, SQL access, backups, restore flows, MCP resources/prompts, and site-aware WP-CLI.",
+  "type": "module",
+  "packageManager": "pnpm@10.32.1",
+  "main": "./dist/server.js",
+  "types": "./dist/server.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "import": "./dist/server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "localwp-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "clean": "rm -rf dist",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "pnpm clean && pnpm check && pnpm test && pnpm build",
+    "start": "node ./dist/index.js",
+    "test": "tsx --test tests/**/*.test.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "wordpress",
+    "localwp",
+    "wp-cli",
+    "mysql",
+    "backup",
+    "restore",
+    "logs",
+    "developer-tools"
+  ],
+  "license": "ISC",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.6.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.3"
+  }
+}

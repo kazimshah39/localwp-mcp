@@ -88,6 +88,7 @@ test("getLightningServiceBinaryCandidates supports direct and nested bin layouts
     getLightningServiceBinaryCandidates(
       "C:\\Local\\lightning-services\\php-8.2.23+0\\bin\\win64",
       "php.exe",
+      "win32",
     ),
     [
       "C:\\Local\\lightning-services\\php-8.2.23+0\\bin\\win64\\php.exe",
@@ -98,10 +99,11 @@ test("getLightningServiceBinaryCandidates supports direct and nested bin layouts
     getLightningServiceBinaryCandidates(
       "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin",
       "php",
+      "darwin",
     ),
     [
-      "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin/php",
       "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin/bin/php",
+      "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin/php",
     ],
   );
 });

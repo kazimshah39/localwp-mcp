@@ -187,9 +187,14 @@ export function getExecutableCandidates(
 export function getLightningServiceBinaryCandidates(
   platformDirPath: string,
   executableName: string,
+  platform?: NodeJS.Platform,
 ) {
-  return dedupePaths([
-    joinPlatformPath(platformDirPath, executableName),
-    joinPlatformPath(platformDirPath, "bin", executableName),
-  ]);
+  const nestedPath = joinPlatformPath(platformDirPath, "bin", executableName);
+  const directPath = joinPlatformPath(platformDirPath, executableName);
+
+  if (platform === "win32") {
+    return dedupePaths([directPath, nestedPath]);
+  }
+
+  return dedupePaths([nestedPath, directPath]);
 }

@@ -219,6 +219,7 @@ async function resolveServiceBinary(
         for (const binaryPath of getLightningServiceBinaryCandidates(
           platformDirPath,
           executableName,
+          config.platform,
         )) {
           if (await isExecutablePath(binaryPath)) {
             return {

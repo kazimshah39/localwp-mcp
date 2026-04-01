@@ -45,13 +45,109 @@ If you want the MCP to focus on one site by default, set:
 
 ## Client Setup
 
-Step-by-step setup guides:
+Use these settings across supported clients:
 
-- [Codex Desktop](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/codex.md)
-- [Cursor](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/cursor.md)
-- [Claude Code](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/claude-code.md)
-- [OpenCode](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/opencode.md)
-- [Generic STDIO MCP Clients](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/generic-stdio.md)
+- transport: `STDIO`
+- command: `npx`
+- arguments: `-y`, `localwp-mcp`
+- default environment variable: `LOCALWP_MCP_PROFILE=safe`
+- optional environment variables:
+  - `LOCAL_SITE_NAME`
+  - `LOCAL_SITE_ID`
+  - `LOCALWP_MCP_BACKUPS_DIR`
+
+Do not choose `Streamable HTTP`. `localwp-mcp` currently runs as a local stdio MCP server.
+
+### Codex Desktop
+
+In Codex Desktop:
+
+1. Open `Settings`
+2. Open `MCP servers`
+3. Add a custom MCP
+4. Choose `STDIO`
+
+Then enter:
+
+- Name: `localwp`
+- Command to launch: `npx`
+- Arguments:
+  - `-y`
+  - `localwp-mcp`
+- Environment variables:
+  - `LOCALWP_MCP_PROFILE` = `safe`
+  - optional: `LOCAL_SITE_NAME` = `your-site-name`
+
+### Cursor
+
+Add this to your Cursor MCP config, for example `.cursor/mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "localwp": {
+      "command": "npx",
+      "args": ["-y", "localwp-mcp"],
+      "env": {
+        "LOCALWP_MCP_PROFILE": "safe"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+Add the MCP through the Claude Code CLI.
+
+macOS and Linux:
+
+```bash
+claude mcp add localwp -- npx -y localwp-mcp
+```
+
+Windows:
+
+```powershell
+claude mcp add localwp -- cmd /c npx -y localwp-mcp
+```
+
+The space before and after `--` is intentional. `--` is the separator between the Claude command and the command Claude should launch.
+
+After adding the server, configure:
+
+- `LOCALWP_MCP_PROFILE=safe`
+- optional: `LOCAL_SITE_NAME=your-site-name`
+
+### OpenCode
+
+Use a local MCP server entry in your OpenCode config:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "localwp": {
+      "type": "local",
+      "command": ["npx", "-y", "localwp-mcp"],
+      "enabled": true,
+      "environment": {
+        "LOCALWP_MCP_PROFILE": "safe"
+      }
+    }
+  }
+}
+```
+
+### Other STDIO MCP Clients
+
+If your MCP client supports launching a local server over `STDIO`, use:
+
+- command: `npx`
+- arguments: `-y`, `localwp-mcp`
+- environment: `LOCALWP_MCP_PROFILE=safe`
+
+If a client only accepts an MCP URL and cannot launch a local command, it cannot use `localwp-mcp` yet.
 
 ## Access Modes
 

@@ -232,6 +232,13 @@ If you want to manage backup storage over time:
 
 It supports both current Local `lightning-services` layouts and older `site-binaries` layouts.
 
+Live validation has been completed on:
+
+- macOS
+- Windows
+
+Linux support is implemented in the code paths and tests, but has not yet been live-validated on a machine with LocalWP.
+
 ## Useful Environment Variables
 
 Most users only need these:

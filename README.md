@@ -158,6 +158,9 @@ Use:
 Use:
 
 - `backup_site`
+- `list_backups`
+- `delete_backup`
+- `cleanup_backups`
 - `db_export`
 - `db_import`
 - `restore_backup`
@@ -168,6 +171,15 @@ Use:
 - `full`
 
 The `full` backup format is folder-based and includes the site's `app`, `conf`, and `logs` directories plus a fresh SQL dump.
+
+If you want to manage backup storage over time:
+
+- `list_backups`
+  Shows the managed backup directories and SQL artifacts for a site.
+- `delete_backup`
+  Removes one managed backup artifact in `full-access`.
+- `cleanup_backups`
+  Cleans up older backups by age and/or retention count in `full-access`.
 
 ## Built-In Capabilities
 
@@ -193,6 +205,9 @@ The `full` backup format is folder-based and includes the site's `app`, `conf`, 
 - `db_export`
 - `db_import`
 - `backup_site`
+- `list_backups`
+- `delete_backup`
+- `cleanup_backups`
 - `restore_backup`
 
 ### MCP Resources

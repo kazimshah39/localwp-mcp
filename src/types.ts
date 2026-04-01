@@ -1,6 +1,13 @@
 export type AccessProfile = "safe" | "full-access";
 export type LogScope = "site" | "global" | "all";
 export type BackupScope = "database" | "full";
+export type BackupArtifactCategory =
+  | "full_backup"
+  | "database_backup"
+  | "pre_restore_backup"
+  | "database_export"
+  | "pre_import_backup"
+  | "sql_file";
 
 export type LocalSiteStatus = "running" | "halted" | "unknown" | string;
 

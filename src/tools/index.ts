@@ -1,10 +1,13 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { registerBackupSiteTool } from "./backup-site.js";
+import { registerCleanupBackupsTool } from "./cleanup-backups.js";
 import { registerDbExportTool } from "./db-export.js";
 import { registerDbImportTool } from "./db-import.js";
+import { registerDeleteBackupTool } from "./delete-backup.js";
 import { registerDeleteSiteFileTool } from "./delete-site-file.js";
 import { registerExecuteWpCliTool } from "./execute-wp-cli.js";
+import { registerListBackupsTool } from "./list-backups.js";
 import { registerListSiteFilesTool } from "./list-site-files.js";
 import { registerLocalDoctorTool } from "./local-doctor.js";
 import { registerLocalEnvironmentCheckTool } from "./local-environment-check.js";
@@ -37,6 +40,9 @@ export function registerTools(server: McpServer) {
   registerWriteSiteFileTool(server);
   registerDeleteSiteFileTool(server);
   registerBackupSiteTool(server);
+  registerListBackupsTool(server);
+  registerDeleteBackupTool(server);
+  registerCleanupBackupsTool(server);
   registerDbExportTool(server);
   registerDbImportTool(server);
   registerRestoreBackupTool(server);

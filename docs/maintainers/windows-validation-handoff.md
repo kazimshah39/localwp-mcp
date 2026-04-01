@@ -13,7 +13,7 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
   - `safe`
   - `full-access`
 - Current feature surface:
-  - `21` tools
+  - `24` tools
   - `22` resources
   - `2` prompts
 - Live-tested successfully on macOS against a real LocalWP site.
@@ -29,6 +29,9 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
   - `db_export`
   - `db_import`
   - `backup_site`
+  - `list_backups`
+  - `delete_backup`
+  - `cleanup_backups`
   - `restore_backup`
 
 ## Important Known Detail
@@ -36,6 +39,11 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
 One compatibility issue was found during deep testing and already fixed:
 
 - `mysql_schema` now accepts both `table` and `tableName`
+
+One Windows-specific risk is still open and must be retested carefully:
+
+- `restore_backup` with file restoration enabled (`restoreFiles: true`) was observed not to work correctly on Windows.
+- Do not treat a successful tool response as proof here. The Windows run must verify on disk that restored files actually revert and that extra files created after the backup are removed when `replaceDirectories: true` is used.
 
 If Windows testing fails around schema inspection, first confirm the current code still includes that alias support in:
 
@@ -83,6 +91,9 @@ These tools should be present:
 - `db_export`
 - `db_import`
 - `backup_site`
+- `list_backups`
+- `delete_backup`
+- `cleanup_backups`
 - `restore_backup`
 
 ## Resources To Validate
@@ -197,6 +208,7 @@ Then validate all of the following through the real MCP stdio server:
 - `db_export`
 - `backup_site` with `scope=database`
 - `backup_site` with `scope=full`
+- `list_backups`
 - resource listing
 - resource reads
 - prompt listing
@@ -207,6 +219,8 @@ These actions should be blocked in `safe`:
 - `mysql_execute`
 - `db_import`
 - `restore_backup`
+- `delete_backup`
+- `cleanup_backups`
 - `write_site_file`
 - `delete_site_file`
 - `execute_wp_cli` write commands like `plugin activate`
@@ -257,8 +271,13 @@ Then validate all of the following through the real MCP stdio server:
   - use a lightweight SQL smoke file
 - `backup_site` with `scope=database`
 - `backup_site` with `scope=full`
+- `list_backups`
+- `delete_backup`
+- `cleanup_backups`
 - `restore_backup` from a database backup
 - `restore_backup` from a full backup
+  - explicitly test file restoration with `restoreFiles: true`
+  - change a known file after backup, add an extra file, restore, and verify both behaviors on disk
 - run `local_doctor` again after restore
 - resource listing and reads
 - prompt listing and retrieval
@@ -276,6 +295,9 @@ Also check that the generated files and folders exist on disk:
 - copied `conf`
 - copied `logs`
 - SQL dump inside full backup
+- for Windows file-restore testing:
+  - the changed file content should be reverted after `restore_backup`
+  - extra files created after the backup should be gone after `restore_backup` with `replaceDirectories: true`
 
 For a full backup, verify the backup directory contains at least:
 
@@ -297,6 +319,7 @@ The Windows test report should include:
 - whether `safe` restrictions were enforced correctly
 - whether `full-access` actions succeeded
 - whether backup/export/import/restore succeeded
+- whether `restore_backup` with `restoreFiles: true` actually restored files on disk
 - whether resources and prompts worked
 - any Windows-specific path issues or Local binary resolution issues
 

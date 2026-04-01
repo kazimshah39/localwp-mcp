@@ -47,11 +47,11 @@ If you want the MCP to focus on one site by default, set:
 
 Step-by-step setup guides:
 
-- [Codex Desktop](./docs/clients/codex.md)
-- [Cursor](./docs/clients/cursor.md)
-- [Claude Code](./docs/clients/claude-code.md)
-- [OpenCode](./docs/clients/opencode.md)
-- [Generic STDIO MCP Clients](./docs/clients/generic-stdio.md)
+- [Codex Desktop](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/codex.md)
+- [Cursor](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/cursor.md)
+- [Claude Code](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/claude-code.md)
+- [OpenCode](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/opencode.md)
+- [Generic STDIO MCP Clients](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/clients/generic-stdio.md)
 
 ## Access Modes
 
@@ -273,6 +273,6 @@ Those tools are the fastest way to see whether the problem is:
 
 Contributor and maintainer docs live outside the main user guide:
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [SECURITY.md](./SECURITY.md)
-- [Maintainer Docs](./docs/maintainers/README.md)
+- [CONTRIBUTING.md](https://github.com/kazimshah39/localwp-mcp/blob/main/CONTRIBUTING.md)
+- [SECURITY.md](https://github.com/kazimshah39/localwp-mcp/blob/main/SECURITY.md)
+- [Maintainer Docs](https://github.com/kazimshah39/localwp-mcp/blob/main/docs/maintainers/README.md)

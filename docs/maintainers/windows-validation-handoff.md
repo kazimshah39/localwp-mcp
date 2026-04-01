@@ -13,7 +13,7 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
   - `safe`
   - `full-access`
 - Current feature surface:
-  - `24` tools
+  - `25` tools
   - `22` resources
   - `2` prompts
 - Live-tested successfully on macOS against a real LocalWP site.
@@ -32,6 +32,7 @@ The goal is to validate that `localwp-mcp` works end-to-end on Windows with a re
   - `list_backups`
   - `delete_backup`
   - `cleanup_backups`
+  - `preview_restore_backup`
   - `restore_backup`
 
 ## Important Known Detail
@@ -40,9 +41,9 @@ One compatibility issue was found during deep testing and already fixed:
 
 - `mysql_schema` now accepts both `table` and `tableName`
 
-One Windows-specific risk is still open and must be retested carefully:
+One Windows-specific regression target should still be retested carefully:
 
-- `restore_backup` with file restoration enabled (`restoreFiles: true`) was observed not to work correctly on Windows.
+- `restore_backup` with file restoration enabled (`restoreFiles: true`) has now been validated on Windows, but it is still high-risk enough that future Windows regression runs should verify it on disk.
 - Do not treat a successful tool response as proof here. The Windows run must verify on disk that restored files actually revert and that extra files created after the backup are removed when `replaceDirectories: true` is used.
 
 If Windows testing fails around schema inspection, first confirm the current code still includes that alias support in:
@@ -94,6 +95,7 @@ These tools should be present:
 - `list_backups`
 - `delete_backup`
 - `cleanup_backups`
+- `preview_restore_backup`
 - `restore_backup`
 
 ## Resources To Validate
@@ -209,6 +211,7 @@ Then validate all of the following through the real MCP stdio server:
 - `backup_site` with `scope=database`
 - `backup_site` with `scope=full`
 - `list_backups`
+- `preview_restore_backup`
 - resource listing
 - resource reads
 - prompt listing
@@ -274,6 +277,7 @@ Then validate all of the following through the real MCP stdio server:
 - `list_backups`
 - `delete_backup`
 - `cleanup_backups`
+- `preview_restore_backup`
 - `restore_backup` from a database backup
 - `restore_backup` from a full backup
   - explicitly test file restoration with `restoreFiles: true`

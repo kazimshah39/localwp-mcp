@@ -12,10 +12,10 @@ export const siteSelectorSchema = {
 };
 
 export const logScopeSchema = z
-  .enum(["site", "global", "all"])
+  .string()
   .optional()
   .describe(
-    "Which logs to read: the selected site's logs, Local's app logs, or both.",
+    "Which logs to read: 'site', 'global', or 'all'. Friendly aliases like 'both' and 'combined' are also accepted.",
   );
 
 export const backupScopeSchema = z

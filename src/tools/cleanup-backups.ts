@@ -2,7 +2,6 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import {
-  backupArtifactCategories,
   cleanupManagedBackups,
 } from "../backup-management.js";
 import { config } from "../config.js";
@@ -25,10 +24,10 @@ export function registerCleanupBackupsTool(server: McpServer) {
             "Optional custom backup root directory to clean. If omitted, the site's managed localwp-mcp backup root is used.",
           ),
         categories: z
-          .array(z.enum(backupArtifactCategories))
+          .array(z.string())
           .optional()
           .describe(
-            "Optional backup categories to target, such as full_backup, pre_restore_backup, or database_export.",
+            "Optional backup categories to target. Canonical values include full_backup, database_backup, pre_restore_backup, pre_import_backup, database_export, and sql_file. Friendly aliases like full, database, pre_restore, pre_import, managed_export, standalone_sql, and export are also accepted.",
           ),
         olderThanDays: z
           .number()

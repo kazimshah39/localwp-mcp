@@ -26,14 +26,34 @@ export function clampLogLines(lines: number | undefined) {
   return Math.min(Math.max(lines, 1), config.maxLogTailLines);
 }
 
+export function normalizeLogScope(value: string | undefined): LogScope {
+  const normalized = value?.trim().toLowerCase();
+
+  if (!normalized || normalized === "site") {
+    return "site";
+  }
+
+  if (normalized === "global") {
+    return "global";
+  }
+
+  if (["all", "both", "combined"].includes(normalized)) {
+    return "all";
+  }
+
+  throw new Error(
+    "Invalid local_logs scope. Expected 'site', 'global', 'all', 'both', or 'combined'.",
+  );
+}
+
 export async function collectLocalLogs(
   selection: SiteSelection,
   options: {
-    scope?: LogScope;
+    scope?: LogScope | string;
     lines?: number;
   } = {},
 ) {
-  const scope = options.scope || "site";
+  const scope = normalizeLogScope(options.scope);
   const lines = clampLogLines(options.lines);
   const includeSite = scope === "site" || scope === "all";
   const includeGlobal = scope === "global" || scope === "all";

@@ -1,10 +1,13 @@
 import { cp, mkdir, readdir, readFile, rm, stat, writeFile } from "fs/promises";
 import path from "path";
+import crypto from "node:crypto";
 
 import { config } from "./config.js";
 import { summarizeSite } from "./local-sites.js";
-import { ensureMysqlReady } from "./mysql.js";
+import { ensureMysqlReady, executeMysqlStatement } from "./mysql.js";
 import { assertReadable, isReadablePath, spawnCommand } from "./process-utils.js";
+import { resolvePackageVersion } from "./version.js";
+import { runWpCliArgs } from "./wp-cli.js";
 import type { BackupScope, SiteContext } from "./types.js";
 
 const defaultBackupDirectories = ["app", "conf", "logs"] as const;
@@ -12,9 +15,19 @@ const backupManifestVersion = "localwp-mcp-backup-v1";
 
 interface BackupManifest {
   format: string;
+  schemaVersion?: number;
+  toolVersion?: string;
   createdAt?: string;
   scope?: BackupScope;
   accessProfile?: string;
+  platform?: string;
+  localVersion?: string | null;
+  phpVersion?: string | null;
+  mysqlVersion?: string | null;
+  wordpressVersion?: string | null;
+  siteUrl?: string | null;
+  homeUrl?: string | null;
+  runtimeStatusAtBackup?: string | null;
   site?: Record<string, unknown>;
   database?: {
     file?: string;
@@ -22,6 +35,7 @@ interface BackupManifest {
     source?: string;
   };
   copiedDirectories?: string[];
+  warningsAtBackupTime?: string[];
   notes?: string[];
 }
 
@@ -34,6 +48,14 @@ interface ResolvedBackupSource {
   copiedDirectories: string[];
 }
 
+interface SiteSnapshot {
+  wordpressVersion: string | null;
+  siteUrl: string | null;
+  homeUrl: string | null;
+  mysqlReachable: boolean;
+  warnings: string[];
+}
+
 export async function createSiteBackup(
   context: SiteContext,
   options: {
@@ -42,8 +64,11 @@ export async function createSiteBackup(
     label?: string;
   } = {},
 ) {
+  const startedAt = new Date();
+  const operationId = createOperationId("backup", context.site.id);
   const scope = options.scope || "full";
   await ensureMysqlReady(context);
+  const siteSnapshot = await collectSiteSnapshot(context);
 
   const backupRoot = resolveBackupRoot(context, options.outputDir);
   const backupName = buildBackupDirectoryName(context.site.name, scope, options.label);
@@ -82,9 +107,19 @@ export async function createSiteBackup(
 
   const manifest = {
     format: "localwp-mcp-backup-v1",
-    createdAt: new Date().toISOString(),
+    schemaVersion: 1,
+    toolVersion: resolvePackageVersion(),
+    createdAt: startedAt.toISOString(),
     scope,
     accessProfile: config.profile,
+    platform: config.platform,
+    localVersion: context.site.localVersion || null,
+    phpVersion: context.site.services?.php?.version || null,
+    mysqlVersion: context.site.services?.mysql?.version || null,
+    wordpressVersion: siteSnapshot.wordpressVersion,
+    siteUrl: siteSnapshot.siteUrl,
+    homeUrl: siteSnapshot.homeUrl,
+    runtimeStatusAtBackup: context.site.status || null,
     site: summarizeSite(context.site),
     database: {
       file: databaseFileRelativePath,
@@ -92,6 +127,7 @@ export async function createSiteBackup(
       source: "mysqldump",
     },
     copiedDirectories,
+    warningsAtBackupTime: siteSnapshot.warnings,
     notes:
       scope === "full"
         ? [
@@ -106,13 +142,21 @@ export async function createSiteBackup(
 
   const manifestPath = path.join(backupDir, "manifest.json");
   await writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
+  const finishedAt = new Date();
 
   return {
+    status: "ok" as const,
+    operationId,
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
     backupDir,
     manifestPath,
     scope,
     databaseFilePath: exportResult.outputPath,
     copiedDirectories,
+    warnings: siteSnapshot.warnings,
+    manifest,
   };
 }
 
@@ -125,18 +169,11 @@ export async function restoreSiteBackup(
     backupBeforeRestore?: boolean;
   } = {},
 ) {
+  const startedAt = new Date();
+  const plan = await previewRestoreSiteBackup(context, sourcePath, options);
   await ensureMysqlReady(context);
-
   const resolvedSource = await resolveBackupSource(sourcePath);
-  const restoreFiles = options.restoreFiles ?? true;
-  const replaceDirectories = options.replaceDirectories ?? true;
-  const fileRestoreAvailable =
-    restoreFiles &&
-    Boolean(
-      resolvedSource.backupDir &&
-        resolvedSource.manifest?.scope === "full" &&
-        resolvedSource.copiedDirectories.length > 0,
-    );
+  const fileRestoreAvailable = plan.fileRestoreAvailable;
   let preRestoreBackup: Awaited<ReturnType<typeof createSiteBackup>> | null = null;
 
   if (options.backupBeforeRestore ?? true) {
@@ -151,24 +188,34 @@ export async function restoreSiteBackup(
       context,
       resolvedSource.backupDir,
       resolvedSource.copiedDirectories,
-      replaceDirectories,
+      plan.replaceDirectories,
     );
   }
 
   const importResult = await importDatabase(context, resolvedSource.sqlFilePath, {
     backupBeforeImport: false,
   });
+  const finishedAt = new Date();
 
   return {
+    status: "ok" as const,
+    operationId: plan.operationId,
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
     sourcePath: resolvedSource.inputPath,
     sqlFilePath: resolvedSource.sqlFilePath,
     backupDir: resolvedSource.backupDir,
     manifestPath: resolvedSource.manifestPath,
     restoredFiles: fileRestoreAvailable ? resolvedSource.copiedDirectories : [],
-    replaceDirectories,
-    restartRecommended: fileRestoreAvailable,
+    requestedMode: plan.requestedMode,
+    effectiveMode: plan.effectiveMode,
+    replaceDirectories: plan.replaceDirectories,
+    restartRecommended: plan.restartRecommended,
     preRestoreBackupDir: preRestoreBackup?.backupDir || null,
     preRestoreManifestPath: preRestoreBackup?.manifestPath || null,
+    warnings: plan.warnings,
+    manifest: resolvedSource.manifest,
     stdout: importResult.stdout,
     stderr: importResult.stderr,
   };
@@ -181,6 +228,8 @@ export async function exportDatabase(
     label?: string;
   } = {},
 ) {
+  const startedAt = new Date();
+  const operationId = createOperationId("db_export", context.site.id);
   await ensureMysqlReady(context);
 
   const outputPath = await resolveExportPath(context, options.destinationPath, {
@@ -190,11 +239,18 @@ export async function exportDatabase(
   await mkdir(path.dirname(outputPath), { recursive: true });
 
   const result = await executeMysqlExport(context, outputPath);
+  const finishedAt = new Date();
 
   return {
+    status: "ok" as const,
+    operationId,
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
     outputPath,
     stdout: result.stdout,
     stderr: result.stderr || null,
+    warnings: [] as string[],
   };
 }
 
@@ -205,6 +261,8 @@ export async function importDatabase(
     backupBeforeImport?: boolean;
   } = {},
 ) {
+  const startedAt = new Date();
+  const operationId = createOperationId("db_import", context.site.id);
   await ensureMysqlReady(context);
 
   const resolvedSourcePath = await resolveImportSourcePath(sourcePath);
@@ -222,12 +280,19 @@ export async function importDatabase(
   }
 
   const result = await executeMysqlImport(context, resolvedSourcePath);
+  const finishedAt = new Date();
 
   return {
+    status: "ok" as const,
+    operationId,
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
     sourcePath: resolvedSourcePath,
     backupPath,
     stdout: result.stdout,
     stderr: result.stderr || null,
+    warnings: [] as string[],
   };
 }
 
@@ -262,6 +327,83 @@ export function sanitizeBackupSegment(value: string) {
 export async function resolveImportSourcePath(inputPath: string) {
   const resolvedSource = await resolveBackupSource(inputPath);
   return resolvedSource.sqlFilePath;
+}
+
+export async function previewRestoreSiteBackup(
+  context: SiteContext,
+  sourcePath: string,
+  options: {
+    restoreFiles?: boolean;
+    replaceDirectories?: boolean;
+    backupBeforeRestore?: boolean;
+  } = {},
+) {
+  const startedAt = new Date();
+  const operationId = createOperationId("preview_restore", context.site.id);
+  const resolvedSource = await resolveBackupSource(sourcePath);
+  const siteSnapshot = await collectSiteSnapshot(context);
+  const restoreFiles = options.restoreFiles ?? true;
+  const replaceDirectories = options.replaceDirectories ?? true;
+  const filePayloadAvailable = Boolean(
+    resolvedSource.backupDir &&
+      resolvedSource.manifest?.scope === "full" &&
+      resolvedSource.copiedDirectories.length > 0,
+  );
+  const fileRestoreAvailable = restoreFiles && filePayloadAvailable;
+  const requestedMode = describeRequestedRestoreMode(
+    restoreFiles,
+    replaceDirectories,
+  );
+  const effectiveMode = describeEffectiveRestoreMode(
+    resolvedSource.manifest?.scope,
+    filePayloadAvailable,
+    restoreFiles,
+    replaceDirectories,
+  );
+  const warnings = buildRestoreWarnings(
+    context,
+    resolvedSource,
+    siteSnapshot,
+    requestedMode,
+    effectiveMode,
+    replaceDirectories,
+  );
+  const finishedAt = new Date();
+
+  return {
+    status: "preview" as const,
+    operationId,
+    startedAt: startedAt.toISOString(),
+    finishedAt: finishedAt.toISOString(),
+    durationMs: finishedAt.getTime() - startedAt.getTime(),
+    sourcePath: resolvedSource.inputPath,
+    sqlFilePath: resolvedSource.sqlFilePath,
+    backupDir: resolvedSource.backupDir,
+    manifestPath: resolvedSource.manifestPath,
+    manifest: resolvedSource.manifest,
+    requestedMode,
+    effectiveMode,
+    restoreFiles,
+    replaceDirectories,
+    filePayloadAvailable,
+    fileRestoreAvailable,
+    copiedDirectories: resolvedSource.copiedDirectories,
+    restartRecommended: fileRestoreAvailable,
+    wouldCreatePreRestoreBackup: options.backupBeforeRestore ?? true,
+    preRestoreBackupScope: fileRestoreAvailable ? "full" : "database",
+    siteSnapshot: {
+      wordpressVersion: siteSnapshot.wordpressVersion,
+      siteUrl: siteSnapshot.siteUrl,
+      homeUrl: siteSnapshot.homeUrl,
+      mysqlReachable: siteSnapshot.mysqlReachable,
+      runtimeStatus: context.site.status,
+      localVersion: context.site.localVersion || null,
+      phpVersion: context.site.services?.php?.version || null,
+      mysqlVersion: context.site.services?.mysql?.version || null,
+    },
+    phases: buildRestorePreviewPhases(fileRestoreAvailable),
+    warnings,
+  };
 }
 
 export async function resolveBackupSource(
@@ -461,6 +603,196 @@ function normalizeCopiedDirectories(value: string[] | undefined) {
       directoryName as (typeof defaultBackupDirectories)[number],
     ),
   );
+}
+
+async function collectSiteSnapshot(context: SiteContext): Promise<SiteSnapshot> {
+  const warnings: string[] = [];
+  let wordpressVersion: string | null = null;
+  let siteUrl: string | null = null;
+  let homeUrl: string | null = null;
+  let mysqlReachable = false;
+
+  try {
+    const versionResult = await runWpCliArgs(context, ["core", "version"], {
+      skipPermissionCheck: true,
+    });
+    wordpressVersion = versionResult.stdout.trim() || null;
+  } catch (error) {
+    warnings.push(
+      `Could not determine the current WordPress version: ${formatWarning(error)}`,
+    );
+  }
+
+  try {
+    const siteUrlResult = await runWpCliArgs(context, ["option", "get", "siteurl"], {
+      skipPermissionCheck: true,
+    });
+    siteUrl = siteUrlResult.stdout.trim() || null;
+  } catch (error) {
+    warnings.push(
+      `Could not determine the current siteurl: ${formatWarning(error)}`,
+    );
+  }
+
+  try {
+    const homeUrlResult = await runWpCliArgs(context, ["option", "get", "home"], {
+      skipPermissionCheck: true,
+    });
+    homeUrl = homeUrlResult.stdout.trim() || null;
+  } catch (error) {
+    warnings.push(
+      `Could not determine the current home URL: ${formatWarning(error)}`,
+    );
+  }
+
+  try {
+    await ensureMysqlReady(context);
+    await executeMysqlStatement(context, "SELECT 1 AS ok", 1);
+    mysqlReachable = true;
+  } catch (error) {
+    warnings.push(
+      `MySQL preview probe did not succeed: ${formatWarning(error)}`,
+    );
+  }
+
+  return {
+    wordpressVersion,
+    siteUrl,
+    homeUrl,
+    mysqlReachable,
+    warnings,
+  };
+}
+
+function describeRequestedRestoreMode(
+  restoreFiles: boolean,
+  replaceDirectories: boolean,
+) {
+  if (!restoreFiles) {
+    return "database_only";
+  }
+
+  return replaceDirectories ? "full_replace" : "full_overlay";
+}
+
+function describeEffectiveRestoreMode(
+  scope: BackupScope | undefined,
+  filePayloadAvailable: boolean,
+  restoreFiles: boolean,
+  replaceDirectories: boolean,
+) {
+  if (scope !== "full" || !filePayloadAvailable || !restoreFiles) {
+    return "database_only";
+  }
+
+  return replaceDirectories ? "full_replace" : "full_overlay";
+}
+
+function buildRestorePreviewPhases(fileRestoreAvailable: boolean) {
+  const phases = [
+    "resolve_input",
+    "inspect_site_state",
+    "validate_backup_manifest",
+    "create_pre_restore_backup",
+  ];
+
+  if (fileRestoreAvailable) {
+    phases.push("restore_files");
+  }
+
+  phases.push("restore_database", "verify_restore");
+
+  if (fileRestoreAvailable) {
+    phases.push("restart_runtime");
+  }
+
+  return phases.map((name) => ({
+    name,
+    status: "planned" as const,
+  }));
+}
+
+function buildRestoreWarnings(
+  context: SiteContext,
+  resolvedSource: ResolvedBackupSource,
+  siteSnapshot: SiteSnapshot,
+  requestedMode: string,
+  effectiveMode: string,
+  replaceDirectories: boolean,
+) {
+  const warnings = [...siteSnapshot.warnings];
+
+  if (
+    context.site.status === "running" &&
+    config.platform === "win32" &&
+    requestedMode === "full_replace"
+  ) {
+    warnings.push(
+      "Windows file locks can make full directory replacement harder while the site is running. If restore fails, preview a full_overlay restore or stop the site first.",
+    );
+  }
+
+  if (!siteSnapshot.mysqlReachable) {
+    warnings.push(
+      "MySQL is not currently reachable. A restore that needs database import will fail until MySQL is available.",
+    );
+  }
+
+  if (requestedMode !== effectiveMode) {
+    warnings.push(
+      `The requested restore mode '${requestedMode}' will behave as '${effectiveMode}' for this source.`,
+    );
+  }
+
+  if (
+    resolvedSource.manifest?.wordpressVersion &&
+    siteSnapshot.wordpressVersion &&
+    resolvedSource.manifest.wordpressVersion !== siteSnapshot.wordpressVersion
+  ) {
+    warnings.push(
+      `Backup WordPress version '${resolvedSource.manifest.wordpressVersion}' differs from the current site version '${siteSnapshot.wordpressVersion}'.`,
+    );
+  }
+
+  if (
+    resolvedSource.manifest?.siteUrl &&
+    siteSnapshot.siteUrl &&
+    resolvedSource.manifest.siteUrl !== siteSnapshot.siteUrl
+  ) {
+    warnings.push(
+      `Backup site URL '${resolvedSource.manifest.siteUrl}' differs from the current site URL '${siteSnapshot.siteUrl}'.`,
+    );
+  }
+
+  if (
+    resolvedSource.manifest?.homeUrl &&
+    siteSnapshot.homeUrl &&
+    resolvedSource.manifest.homeUrl !== siteSnapshot.homeUrl
+  ) {
+    warnings.push(
+      `Backup home URL '${resolvedSource.manifest.homeUrl}' differs from the current home URL '${siteSnapshot.homeUrl}'.`,
+    );
+  }
+
+  if (
+    replaceDirectories &&
+    resolvedSource.manifest?.scope === "full" &&
+    resolvedSource.copiedDirectories.length === 0
+  ) {
+    warnings.push(
+      "The backup manifest says this is a full backup, but no restorable app/conf/logs directories were found.",
+    );
+  }
+
+  return [...new Set(warnings)];
+}
+
+function createOperationId(prefix: string, siteId: string) {
+  return `${prefix}_${createTimestamp()}_${sanitizeBackupSegment(siteId)}_${crypto.randomBytes(3).toString("hex")}`;
+}
+
+function formatWarning(error: unknown) {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function buildMysqlConnectionArgs(context: SiteContext) {

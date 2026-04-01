@@ -8,6 +8,7 @@ import {
   cleanupManagedBackups,
   deleteManagedBackup,
   listManagedBackups,
+  normalizeBackupArtifactCategoryInputs,
 } from "../src/backup-management.ts";
 import type { SiteContext } from "../src/types.ts";
 
@@ -231,4 +232,11 @@ test("cleanupManagedBackups supports dry-run retention and real deletion", async
   } finally {
     await rm(tempRoot, { recursive: true, force: true });
   }
+});
+
+test("normalizeBackupArtifactCategoryInputs accepts friendly aliases", () => {
+  assert.deepEqual(
+    normalizeBackupArtifactCategoryInputs(["full", "export", "standalone_sql"]),
+    ["full_backup", "database_export", "sql_file"],
+  );
 });

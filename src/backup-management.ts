@@ -19,6 +19,22 @@ export const backupArtifactCategories = [
   "sql_file",
 ] as const satisfies readonly BackupArtifactCategory[];
 
+export const backupArtifactCategoryAliases = {
+  full: ["full_backup"],
+  database: ["database_backup"],
+  pre_restore: ["pre_restore_backup"],
+  pre_import: ["pre_import_backup"],
+  managed_export: ["database_export"],
+  standalone_sql: ["sql_file"],
+  export: ["database_export", "sql_file"],
+  exports: ["database_export", "sql_file"],
+} as const satisfies Record<string, readonly BackupArtifactCategory[]>;
+
+export const acceptedBackupArtifactCategoryInputs = [
+  ...backupArtifactCategories,
+  ...Object.keys(backupArtifactCategoryAliases),
+] as const;
+
 interface BackupManifestSummary {
   format?: string;
   createdAt?: string;
@@ -52,6 +68,7 @@ export async function listManagedBackups(
       selectionMethod: context.selectionMethod,
       accessProfile: config.profile,
       backupRoot,
+      categorySupport: buildBackupCategorySupport(),
       artifacts: [],
     };
   }
@@ -63,6 +80,7 @@ export async function listManagedBackups(
     selectionMethod: context.selectionMethod,
     accessProfile: config.profile,
     backupRoot,
+    categorySupport: buildBackupCategorySupport(),
     artifacts,
   };
 }
@@ -115,7 +133,7 @@ export async function cleanupManagedBackups(
   context: SiteContext,
   options: {
     rootPath?: string;
-    categories?: BackupArtifactCategory[];
+    categories?: string[];
     olderThanDays?: number;
     keepLatest?: number;
     dryRun?: boolean;
@@ -130,7 +148,9 @@ export async function cleanupManagedBackups(
   const inventory = await listManagedBackups(context, {
     rootPath: options.rootPath,
   });
-  const categories = new Set(options.categories || backupArtifactCategories);
+  const categories = new Set(
+    normalizeBackupArtifactCategoryInputs(options.categories),
+  );
   const eligibleArtifacts = inventory.artifacts.filter((artifact) =>
     categories.has(artifact.category),
   );
@@ -164,6 +184,7 @@ export async function cleanupManagedBackups(
   return {
     ...inventory,
     categories: Array.from(categories),
+    requestedCategories: options.categories || null,
     olderThanDays: options.olderThanDays ?? null,
     keepLatest: options.keepLatest ?? null,
     dryRun: options.dryRun ?? false,
@@ -178,6 +199,51 @@ export async function cleanupManagedBackups(
       retainedPaths.has(artifact.path),
     ),
   };
+}
+
+export function normalizeBackupArtifactCategoryInputs(
+  categories: string[] | undefined,
+): BackupArtifactCategory[] {
+  if (!categories || categories.length === 0) {
+    return [...backupArtifactCategories];
+  }
+
+  const normalized = new Set<BackupArtifactCategory>();
+
+  for (const rawCategory of categories) {
+    const category = rawCategory.trim().toLowerCase();
+
+    if (!category) {
+      continue;
+    }
+
+    if (isBackupArtifactCategory(category)) {
+      normalized.add(category);
+      continue;
+    }
+
+    const aliasTargets =
+      backupArtifactCategoryAliases[
+        category as keyof typeof backupArtifactCategoryAliases
+      ];
+
+    if (aliasTargets) {
+      for (const aliasTarget of aliasTargets) {
+        normalized.add(aliasTarget);
+      }
+      continue;
+    }
+
+    throw new Error(
+      `Unknown backup category '${rawCategory}'. Accepted values: ${acceptedBackupArtifactCategoryInputs.join(", ")}.`,
+    );
+  }
+
+  if (normalized.size === 0) {
+    return [...backupArtifactCategories];
+  }
+
+  return [...normalized];
 }
 
 export function resolveManagedBackupRoot(
@@ -344,4 +410,15 @@ async function calculatePathSize(absolutePath: string): Promise<number> {
 
 function normalizeBackupRelativePath(relativePath: string) {
   return relativePath.replaceAll(path.sep, "/");
+}
+
+function isBackupArtifactCategory(value: string): value is BackupArtifactCategory {
+  return backupArtifactCategories.includes(value as BackupArtifactCategory);
+}
+
+function buildBackupCategorySupport() {
+  return {
+    canonical: [...backupArtifactCategories],
+    aliases: backupArtifactCategoryAliases,
+  };
 }

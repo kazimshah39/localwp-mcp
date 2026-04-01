@@ -24,7 +24,7 @@ Use `npx` in your MCP client:
   "mcpServers": {
     "localwp": {
       "command": "npx",
-      "args": ["localwp-mcp"],
+      "args": ["-y", "localwp-mcp"],
       "env": {
         "LOCALWP_MCP_PROFILE": "safe"
       }
@@ -33,26 +33,7 @@ Use `npx` in your MCP client:
 }
 ```
 
-You can also install it globally:
-
-```bash
-npm install -g localwp-mcp
-```
-
-Then use:
-
-```json
-{
-  "mcpServers": {
-    "localwp": {
-      "command": "localwp-mcp",
-      "env": {
-        "LOCALWP_MCP_PROFILE": "safe"
-      }
-    }
-  }
-}
-```
+`localwp-mcp` currently supports `STDIO` clients. Streamable HTTP is not supported yet.
 
 If you want the MCP to focus on one site by default, set:
 
@@ -61,6 +42,16 @@ If you want the MCP to focus on one site by default, set:
   "LOCAL_SITE_NAME": "example-site"
 }
 ```
+
+## Client Setup
+
+Step-by-step setup guides:
+
+- [Codex Desktop](./docs/clients/codex.md)
+- [Cursor](./docs/clients/cursor.md)
+- [Claude Code](./docs/clients/claude-code.md)
+- [OpenCode](./docs/clients/opencode.md)
+- [Generic STDIO MCP Clients](./docs/clients/generic-stdio.md)
 
 ## Access Modes
 
@@ -105,6 +96,13 @@ Use:
 - `local_site_info`
 - `local_doctor`
 - `local_logs`
+
+`local_logs` accepts:
+
+- `site`
+- `global`
+- `all`
+- aliases: `both`, `combined`
 
 ### Work With Site Files
 
@@ -163,6 +161,7 @@ Use:
 - `cleanup_backups`
 - `db_export`
 - `db_import`
+- `preview_restore_backup`
 - `restore_backup`
 
 `backup_site` supports:
@@ -180,6 +179,8 @@ If you want to manage backup storage over time:
   Removes one managed backup artifact in `full-access`.
 - `cleanup_backups`
   Cleans up older backups by age and/or retention count in `full-access`.
+
+Use `preview_restore_backup` when you want to inspect the restore plan, effective restore mode, compatibility warnings, and current site state before making changes.
 
 ## Built-In Capabilities
 
@@ -208,6 +209,7 @@ If you want to manage backup storage over time:
 - `list_backups`
 - `delete_backup`
 - `cleanup_backups`
+- `preview_restore_backup`
 - `restore_backup`
 
 ### MCP Resources

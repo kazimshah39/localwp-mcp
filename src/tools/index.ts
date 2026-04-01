@@ -17,6 +17,7 @@ import { registerLocalSiteInfoTool } from "./local-site-info.js";
 import { registerMysqlExecuteTool } from "./mysql-execute.js";
 import { registerMysqlQueryTool } from "./mysql-query.js";
 import { registerMysqlSchemaTool } from "./mysql-schema.js";
+import { registerPreviewRestoreBackupTool } from "./preview-restore-backup.js";
 import { registerReadSiteFileTool } from "./read-site-file.js";
 import { registerRestartLocalSiteTool } from "./restart-local-site.js";
 import { registerRestoreBackupTool } from "./restore-backup.js";
@@ -45,6 +46,7 @@ export function registerTools(server: McpServer) {
   registerCleanupBackupsTool(server);
   registerDbExportTool(server);
   registerDbImportTool(server);
+  registerPreviewRestoreBackupTool(server);
   registerRestoreBackupTool(server);
   registerMysqlQueryTool(server);
   registerMysqlExecuteTool(server);

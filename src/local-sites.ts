@@ -5,6 +5,7 @@ import { config } from "./config.js";
 import {
   getExecutableCandidates,
   getLegacySiteBinariesDirs,
+  getLightningServiceBinaryCandidates,
   getPlatformBinDirCandidates,
 } from "./platform-paths.js";
 import {
@@ -172,8 +173,13 @@ export function expandHome(inputPath: string) {
     return config.homeDir;
   }
 
-  if (inputPath.startsWith("~/")) {
-    return path.join(config.homeDir, inputPath.slice(2));
+  if (inputPath.startsWith("~/") || inputPath.startsWith("~\\")) {
+    const relativePathParts = inputPath
+      .slice(2)
+      .split(/[\\/]+/)
+      .filter(Boolean);
+
+    return path.join(config.homeDir, ...relativePathParts);
   }
 
   return inputPath;
@@ -208,20 +214,20 @@ async function resolveServiceBinary(
 
     for (const platformDirName of candidatePlatformDirs) {
       for (const executableName of executableCandidates) {
-        const binaryPath = path.join(
-          binRoot,
-          platformDirName,
-          "bin",
-          executableName,
-        );
+        const platformDirPath = path.join(binRoot, platformDirName);
 
-        if (await isExecutablePath(binaryPath)) {
-          return {
-            packageDir: servicePackage.packageDir,
-            platformDirName,
-            binaryPath,
-            layout: "lightning-services",
-          } satisfies ServiceBinary;
+        for (const binaryPath of getLightningServiceBinaryCandidates(
+          platformDirPath,
+          executableName,
+        )) {
+          if (await isExecutablePath(binaryPath)) {
+            return {
+              packageDir: servicePackage.packageDir,
+              platformDirName,
+              binaryPath,
+              layout: "lightning-services",
+            } satisfies ServiceBinary;
+          }
         }
       }
     }

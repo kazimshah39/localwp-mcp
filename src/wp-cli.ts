@@ -76,11 +76,29 @@ function buildWpCliEnv(
   context: SiteContext,
   tooling: Awaited<ReturnType<typeof resolveLocalTooling>>,
 ) {
+  const phpRuntimeDir =
+    context.php.platformDirName
+      ? path.join(context.php.packageDir, "bin", context.php.platformDirName)
+      : path.dirname(context.php.binaryPath);
+  const imageMagickDir =
+    config.platform === "win32" && context.php.platformDirName
+      ? path.join(phpRuntimeDir, "ImageMagick")
+      : null;
+  const ghostscriptBinDir =
+    config.platform === "win32" && context.php.platformDirName
+      ? path.join(phpRuntimeDir, "ghostscript", "bin")
+      : null;
+  const ghostscriptLibDir =
+    config.platform === "win32" && context.php.platformDirName
+      ? path.join(phpRuntimeDir, "ghostscript", "Resource", "Init")
+      : null;
   const env: NodeJS.ProcessEnv = {
     ...process.env,
     PHPRC: context.phpConfigDir,
     WP_CLI_DISABLE_AUTO_CHECK_UPDATE: "1",
     PATH: [
+      imageMagickDir,
+      ghostscriptBinDir,
       path.dirname(context.mysql.binaryPath),
       path.dirname(context.php.binaryPath),
       path.dirname(tooling.wpCliPhar),
@@ -97,6 +115,14 @@ function buildWpCliEnv(
 
   if (context.magickCoderModulePath) {
     env.MAGICK_CODER_MODULE_PATH = context.magickCoderModulePath;
+  }
+
+  if (imageMagickDir) {
+    env.MAGICK_CONFIGURE_PATH = imageMagickDir;
+  }
+
+  if (ghostscriptLibDir) {
+    env.GS_LIB = ghostscriptLibDir;
   }
 
   return env;

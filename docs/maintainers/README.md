@@ -13,3 +13,4 @@ User-facing installation and usage guidance belongs in the root [README.md](../.
 ## Validation
 
 - [Windows Validation Handoff](./windows-validation-handoff.md)
+- [Windows Validation Report - 2026-04-01](./windows-validation-report-2026-04-01.md)

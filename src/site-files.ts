@@ -39,6 +39,14 @@ interface SiteFileListEntry {
   modifiedAt: string;
 }
 
+function normalizeSiteRelativePath(relativePath: string) {
+  if (relativePath === "" || relativePath === ".") {
+    return ".";
+  }
+
+  return relativePath.split(path.sep).join("/");
+}
+
 export function clampSiteFileReadBytes(value: number | undefined) {
   if (!value) {
     return DEFAULT_READ_BYTES;
@@ -143,10 +151,9 @@ export async function listSiteFiles(
 
       const absoluteEntryPath = path.join(directoryPath, entry.name);
       const entryStats = await lstat(absoluteEntryPath);
-      const relativeEntryPath = path.relative(
-        target.siteRoot,
-        absoluteEntryPath,
-      ) || ".";
+      const relativeEntryPath = normalizeSiteRelativePath(
+        path.relative(target.siteRoot, absoluteEntryPath) || ".",
+      );
 
       entries.push({
         path: relativeEntryPath,
@@ -356,7 +363,9 @@ export async function searchSiteFiles(
         const lineText = getLineText(content, location.line);
 
         matches.push({
-          path: path.relative(target.siteRoot, absoluteEntryPath) || ".",
+          path: normalizeSiteRelativePath(
+            path.relative(target.siteRoot, absoluteEntryPath) || ".",
+          ),
           absolutePath: absoluteEntryPath,
           line: location.line,
           column: location.column,
@@ -502,7 +511,9 @@ export async function resolveSiteScopedPath(
   const trimmedPath = requestedPath.trim();
   const normalizedInput = trimmedPath || ".";
   const absolutePath = path.resolve(siteRoot, normalizedInput);
-  const relativePath = path.relative(siteRoot, absolutePath) || ".";
+  const relativePath = normalizeSiteRelativePath(
+    path.relative(siteRoot, absolutePath) || ".",
+  );
 
   if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
     throw new Error(

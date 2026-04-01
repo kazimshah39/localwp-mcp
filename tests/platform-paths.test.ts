@@ -6,6 +6,7 @@ import {
   getDefaultLocalExtraResourcesDirs,
   getExecutableCandidates,
   getLegacySiteBinariesDirs,
+  getLightningServiceBinaryCandidates,
   getPlatformBinDirCandidates,
   getWpCliPharCandidates,
 } from "../src/platform-paths.ts";
@@ -80,6 +81,29 @@ test("getExecutableCandidates adds .exe on Windows only", () => {
   assert.deepEqual(getExecutableCandidates("php", "darwin"), ["php"]);
   assert.deepEqual(getExecutableCandidates("php", "linux"), ["php"]);
   assert.deepEqual(getExecutableCandidates("php", "win32"), ["php.exe", "php"]);
+});
+
+test("getLightningServiceBinaryCandidates supports direct and nested bin layouts", () => {
+  assert.deepEqual(
+    getLightningServiceBinaryCandidates(
+      "C:\\Local\\lightning-services\\php-8.2.23+0\\bin\\win64",
+      "php.exe",
+    ),
+    [
+      "C:\\Local\\lightning-services\\php-8.2.23+0\\bin\\win64\\php.exe",
+      "C:\\Local\\lightning-services\\php-8.2.23+0\\bin\\win64\\bin\\php.exe",
+    ],
+  );
+  assert.deepEqual(
+    getLightningServiceBinaryCandidates(
+      "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin",
+      "php",
+    ),
+    [
+      "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin/php",
+      "/opt/Local/lightning-services/php-8.2.23+0/bin/darwin/bin/php",
+    ],
+  );
 });
 
 test("getWpCliPharCandidates includes current and legacy Local layouts", () => {

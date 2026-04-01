@@ -183,3 +183,13 @@ export function getExecutableCandidates(
 
   return [binaryName];
 }
+
+export function getLightningServiceBinaryCandidates(
+  platformDirPath: string,
+  executableName: string,
+) {
+  return dedupePaths([
+    joinPlatformPath(platformDirPath, executableName),
+    joinPlatformPath(platformDirPath, "bin", executableName),
+  ]);
+}

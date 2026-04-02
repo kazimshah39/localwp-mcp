@@ -19,11 +19,7 @@ The final result is positive:
 - backup, export, import, restore, inventory, cleanup, resources, and prompts all worked
 - `restore_backup` with `restoreFiles: true` was explicitly verified on disk on Windows and worked correctly
 
-One real issue was found during the live run:
-
-- the server reported version `0.1.0` when started directly via `node dist/index.js`
-
-That issue was fixed in code, covered by tests, and revalidated live. No push or publish action was taken.
+No product issues were discovered in this latest rerun of the Windows validation flow against the current repo state. The previously fixed stdio version-reporting issue stayed fixed, and no new code changes were required during this pass. No push or publish action was taken.
 
 ## Goal Of This Run
 
@@ -49,6 +45,7 @@ In particular, this run was intended to validate:
 | Item | Value |
 | --- | --- |
 | Repo path | `D:\Projects\localwp-mcp` |
+| Package version under validation | `0.1.8` |
 | Operating system | Windows |
 | Current date used for the run | 2026-04-01 |
 | Node | `v24.14.1` |
@@ -68,7 +65,7 @@ The repo was clean at the start of this run.
 
 The built stdio server exposed the following live surface during validation:
 
-- 24 tools
+- 25 tools
 - 58 concrete resources on this machine
 - 3 resource templates
 - 2 prompts
@@ -94,6 +91,7 @@ The built stdio server exposed the following live surface during validation:
 - `cleanup_backups`
 - `db_export`
 - `db_import`
+- `preview_restore_backup`
 - `restore_backup`
 - `mysql_query`
 - `mysql_execute`
@@ -110,6 +108,18 @@ The built stdio server exposed the following live surface during validation:
 
 - `diagnose_local_site`
 - `restore_local_site`
+
+## README And Setup Review
+
+The current README and setup guidance were reviewed against the live server surface before the validation run.
+
+Confirmed accurate in the current repo state:
+
+- the package is documented as a stdio-only MCP
+- the default access profile is documented as `safe`
+- the Windows Claude Code setup guidance still correctly uses `cmd /c npx -y localwp-mcp`
+- the README tool inventory now matches the live server at 25 tools
+- the README MCP capability summary matches the live server at 4 resource entry points and 2 prompts
 
 ## Static Verification
 
@@ -129,11 +139,7 @@ Results:
 - `pnpm test` passed
 - `pnpm build` passed
 
-Before the code fix in this run, the test suite was already green.
-
-After the code fix in this run, the verification was repeated and the final result was:
-
-- 52 tests passed
+- 54 tests passed
 - 0 tests failed
 
 ## LocalWP Discovery On Windows
@@ -311,7 +317,7 @@ The MCP successfully:
 - received a numeric post id
 - deleted the draft post successfully
 
-During the observed run, the temporary draft post id was `6`.
+During this rerun, the temporary draft post id was `7`.
 
 #### MySQL Write Validation
 
@@ -527,51 +533,18 @@ Resolved runtime example paths observed during validation:
   - `database_export` for managed exports under `database-exports`
   - `sql_file` for standalone root-level `.sql` files
 
-## Real Issue Found And Fixed
+## Issues Found In This Rerun
 
-One real issue was found during live stdio validation.
+No new product issues were discovered during this latest Windows rerun against package version `0.1.8`.
 
-### Problem
+The previously fixed stdio version-reporting bug remained fixed:
 
-When the server was started directly with:
-
-```powershell
-node .\dist\index.js
-```
-
-it reported version `0.1.0` instead of the package version `0.1.4`.
-
-This happened because `npm_package_version` is not reliably present when the built file is started directly outside an npm script context.
-
-### Fix
-
-The server now resolves its version like this:
-
-1. use `process.env.npm_package_version` when present
-2. otherwise read the version from `package.json`
-3. only fall back to `0.1.0` as a hard safety default
-
-Changed file:
-
-- [src/server.ts](D:/Projects/localwp-mcp/src/server.ts#L13)
-
-Regression test added:
-
-- [tests/server.test.ts](D:/Projects/localwp-mcp/tests/server.test.ts#L1)
-
-### Revalidation After Fix
-
-After the fix:
-
-- `pnpm check` passed
-- `pnpm test` passed
-- `pnpm build` passed
-- the live stdio server reported version `0.1.4`
+- the live stdio server reported version `0.1.8`
+- both `safe` and `full-access` sessions reported the expected package version
+- no additional code changes were required during this validation pass
 
 ## Files Changed During This Work
 
-- [src/server.ts](D:/Projects/localwp-mcp/src/server.ts#L1)
-- [tests/server.test.ts](D:/Projects/localwp-mcp/tests/server.test.ts#L1)
 - [docs/maintainers/windows-validation-report-2026-04-01.md](D:/Projects/localwp-mcp/docs/maintainers/windows-validation-report-2026-04-01.md#L1)
 
 ## What Passed
@@ -602,6 +575,7 @@ Passed in the final state:
 - `list_backups`
 - `delete_backup`
 - `cleanup_backups`
+- `preview_restore_backup`
 - `restore_backup` from database backup
 - `restore_backup` from full backup
 - explicit file restoration verification on disk for Windows
@@ -611,13 +585,7 @@ Passed in the final state:
 
 No product failures remained at the end of the run.
 
-The only actual code issue discovered during live Windows validation was the stdio server version-reporting bug, and that was fixed.
-
-Some early failures during validation were due to test-harness assumptions rather than MCP defects:
-
-- incorrect assumption about `local_environment_check` payload shape
-- incorrect assumption about SQL restore semantics
-- incorrect assumption about `cleanup_backups` artifact category in one test
+No code fixes were required in this latest rerun.
 
 ## Final Assessment
 
@@ -628,7 +596,7 @@ The strongest release-relevant conclusion from this work is:
 - the current `localwp-mcp` repo works end to end on a real Windows LocalWP setup
 - the main high-risk Windows restore scenario has been tested for real
 - `restore_backup` with `restoreFiles: true` and `replaceDirectories: true` truly works on Windows
-- the only code issue found in this run was fixed and retested
+- the current `0.1.8` repo state passed without needing additional code fixes
 
 ## Scope Limits
 

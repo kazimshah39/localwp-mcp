@@ -7,6 +7,8 @@ import { registerDbImportTool } from "./db-import.js";
 import { registerDeleteBackupTool } from "./delete-backup.js";
 import { registerDeleteSiteFileTool } from "./delete-site-file.js";
 import { registerExecuteWpCliTool } from "./execute-wp-cli.js";
+import { registerExecuteWpPhpReadonlyTool } from "./execute-wp-php-readonly.js";
+import { registerExecuteWpPhpTool } from "./execute-wp-php.js";
 import { registerListBackupsTool } from "./list-backups.js";
 import { registerListSiteFilesTool } from "./list-site-files.js";
 import { registerLocalDoctorTool } from "./local-doctor.js";
@@ -24,6 +26,7 @@ import { registerRestoreBackupTool } from "./restore-backup.js";
 import { registerSearchSiteFilesTool } from "./search-site-files.js";
 import { registerStartLocalSiteTool } from "./start-local-site.js";
 import { registerStopLocalSiteTool } from "./stop-local-site.js";
+import { registerWpRuntimeCallTools } from "./wp-runtime-call.js";
 import { registerWriteSiteFileTool } from "./write-site-file.js";
 
 export function registerTools(server: McpServer) {
@@ -52,4 +55,7 @@ export function registerTools(server: McpServer) {
   registerMysqlExecuteTool(server);
   registerMysqlSchemaTool(server);
   registerExecuteWpCliTool(server);
+  registerExecuteWpPhpReadonlyTool(server);
+  registerExecuteWpPhpTool(server);
+  registerWpRuntimeCallTools(server);
 }

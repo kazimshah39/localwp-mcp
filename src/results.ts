@@ -1,3 +1,5 @@
+import { StructuredToolError } from "./errors.js";
+
 export function createJsonToolResult<T extends Record<string, unknown>>(
   payload: T,
 ) {
@@ -13,6 +15,19 @@ export function createJsonToolResult<T extends Record<string, unknown>>(
 }
 
 export function createErrorToolResult(error: unknown) {
+  if (error instanceof StructuredToolError) {
+    return {
+      isError: true,
+      structuredContent: error.payload,
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(error.payload, null, 2),
+        },
+      ],
+    };
+  }
+
   return {
     isError: true,
     content: [

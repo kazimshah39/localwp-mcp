@@ -34,24 +34,8 @@ export async function executeMysqlStatement(
   sql: string,
   maxRows: number,
 ) {
-  const args = [
-    `--defaults-file=${context.mysqlDefaultsFile}`,
-    "--batch",
-    "--default-character-set=utf8mb4",
-    `--execute=${sql}`,
-  ];
-
-  if (context.mysqlSocket) {
-    args.push("--protocol=SOCKET", `--socket=${context.mysqlSocket}`);
-  } else {
-    args.push("--protocol=TCP", `--host=${context.mysqlHost || config.defaultMysqlHost}`);
-
-    if (context.mysqlPort) {
-      args.push(`--port=${context.mysqlPort}`);
-    }
-  }
-
-  args.push(context.database);
+  const execution = describeMysqlExecution(context);
+  const args = [...execution.argsPrefix, `--execute=${sql}`, execution.database];
 
   const result = await spawnCommand(context.mysql.binaryPath, args, {
     cwd: context.wpRoot,
@@ -86,6 +70,34 @@ export async function executeMysqlStatement(
     truncated: parsed.truncated,
     stderr: result.stderr || null,
   } satisfies MysqlQueryResult;
+}
+
+export function describeMysqlExecution(context: SiteContext) {
+  const argsPrefix = [
+    `--defaults-file=${context.mysqlDefaultsFile}`,
+    "--batch",
+    "--default-character-set=utf8mb4",
+  ];
+
+  if (context.mysqlSocket) {
+    argsPrefix.push("--protocol=SOCKET", `--socket=${context.mysqlSocket}`);
+  } else {
+    argsPrefix.push(
+      "--protocol=TCP",
+      `--host=${context.mysqlHost || config.defaultMysqlHost}`,
+    );
+
+    if (context.mysqlPort) {
+      argsPrefix.push(`--port=${context.mysqlPort}`);
+    }
+  }
+
+  return {
+    command: context.mysql.binaryPath,
+    argsPrefix,
+    database: context.database,
+    cwd: context.wpRoot,
+  };
 }
 
 export function validateSafeSqlQuery(sql: string) {

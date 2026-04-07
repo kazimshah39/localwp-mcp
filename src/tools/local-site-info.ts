@@ -1,10 +1,11 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import { config } from "../config.js";
-import { resolveLocalTooling } from "../local-tooling.js";
 import { buildSiteContext, summarizeSite } from "../local-sites.js";
+import { describeMysqlExecution } from "../mysql.js";
 import { createErrorToolResult, createJsonToolResult } from "../results.js";
 import { siteSelectorSchema } from "../tool-schemas.js";
+import { resolveWpCliExecution } from "../wp-cli.js";
 
 export function registerLocalSiteInfoTool(server: McpServer) {
   server.registerTool(
@@ -22,7 +23,8 @@ export function registerLocalSiteInfoTool(server: McpServer) {
     async ({ siteId, siteName }) => {
       try {
         const context = await buildSiteContext({ siteId, siteName });
-        const tooling = await resolveLocalTooling();
+        const wpCliExecution = await resolveWpCliExecution(context);
+        const mysqlExecution = describeMysqlExecution(context);
 
         return createJsonToolResult({
           site: summarizeSite(context.site),
@@ -40,8 +42,50 @@ export function registerLocalSiteInfoTool(server: McpServer) {
           mysqlSocket: context.mysqlSocket,
           mysqlBinary: context.mysql.binaryPath,
           phpBinary: context.php.binaryPath,
-          wpCliPhar: tooling.wpCliPhar,
-          wpCliConfig: tooling.wpCliConfig,
+          wpCliPhar: wpCliExecution.tooling.wpCliPhar,
+          wpCliConfig: wpCliExecution.tooling.wpCliConfig,
+          wpCliRuntime: {
+            command: wpCliExecution.command,
+            argsPrefix: wpCliExecution.argsPrefix,
+            cwd: wpCliExecution.cwd,
+            envOverrides: {
+              PHPRC: context.phpConfigDir,
+              WP_CLI_DISABLE_AUTO_CHECK_UPDATE: "1",
+              WP_CLI_CONFIG_PATH: wpCliExecution.tooling.wpCliConfig,
+              PATHPrefixEntries: wpCliExecution.pathEntries,
+              MAGICK_CODER_MODULE_PATH: context.magickCoderModulePath || null,
+            },
+            note:
+              "MCP invokes WP-CLI through the Local-managed PHP runtime. Plain shell 'wp' may fail if it does not use the same PHP binary, PHPRC, config, and socket-aware Local context.",
+          },
+          mysqlRuntime: {
+            command: mysqlExecution.command,
+            argsPrefix: mysqlExecution.argsPrefix,
+            database: mysqlExecution.database,
+            cwd: mysqlExecution.cwd,
+          },
+          shellReproduction: {
+            wpCli: {
+              env: {
+                PHPRC: context.phpConfigDir,
+                WP_CLI_DISABLE_AUTO_CHECK_UPDATE: "1",
+                WP_CLI_CONFIG_PATH: wpCliExecution.tooling.wpCliConfig,
+              },
+              command: [
+                wpCliExecution.command,
+                ...wpCliExecution.argsPrefix,
+              ],
+              cwd: wpCliExecution.cwd,
+            },
+            mysql: {
+              command: [
+                mysqlExecution.command,
+                ...mysqlExecution.argsPrefix,
+                mysqlExecution.database,
+              ],
+              cwd: mysqlExecution.cwd,
+            },
+          },
           selectionMethod: context.selectionMethod,
           accessProfile: config.profile,
         });

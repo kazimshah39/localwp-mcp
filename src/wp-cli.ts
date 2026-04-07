@@ -11,6 +11,7 @@ export async function runWpCli(
   command: string,
   options: {
     skipPermissionCheck?: boolean;
+    skipFlagValidation?: boolean;
   } = {},
 ) {
   return runWpCliArgs(context, tokenizeCommand(command), options);
@@ -21,6 +22,7 @@ export async function runWpCliArgs(
   rawArgs: string[],
   options: {
     skipPermissionCheck?: boolean;
+    skipFlagValidation?: boolean;
   } = {},
 ) {
   const args = [...rawArgs];
@@ -35,36 +37,16 @@ export async function runWpCliArgs(
     );
   }
 
-  assertAllowedWpFlags(args);
+  if (!options.skipFlagValidation) {
+    assertAllowedWpFlags(args);
+  }
+
   if (!options.skipPermissionCheck) {
     assertWpCliPermissions(args);
   }
 
-  const tooling = await resolveLocalTooling();
-  const env = buildWpCliEnv(context, tooling);
-  const processArgs = [tooling.wpCliPhar, `--path=${context.wpRoot}`, ...args];
-  const result = await spawnCommand(context.php.binaryPath, processArgs, {
-    cwd: context.wpRoot,
-    env,
-  });
-
-  if (result.timedOut) {
-    throw new Error(
-      `WP-CLI timed out after ${config.defaultTimeoutMs / 1000}s for site '${context.site.name}'.`,
-    );
-  }
-
-  if (result.exitCode !== 0) {
-    throw new Error(
-      [
-        `WP-CLI exited with code ${result.exitCode} for site '${context.site.name}'.`,
-        result.stdout,
-        result.stderr,
-      ]
-        .filter(Boolean)
-        .join("\n\n"),
-    );
-  }
+  const result = await runWpCliArgsRaw(context, args);
+  assertWpCliProcessSucceeded(context, result);
 
   return {
     stdout: result.stdout || "Command executed successfully with no output.",
@@ -72,7 +54,108 @@ export async function runWpCliArgs(
   };
 }
 
+export async function runWpCliArgsRaw(
+  context: SiteContext,
+  rawArgs: string[],
+) {
+  const execution = await resolveWpCliExecution(context);
+  return spawnCommand(
+    execution.command,
+    [...execution.argsPrefix, ...rawArgs],
+    {
+      cwd: execution.cwd,
+      env: execution.env,
+    },
+  );
+}
+
+export function assertWpCliProcessSucceeded(
+  context: SiteContext,
+  result: Awaited<ReturnType<typeof runWpCliArgsRaw>>,
+) {
+  if (result.timedOut) {
+    throw new Error(
+      `WP-CLI timed out after ${config.defaultTimeoutMs / 1000}s for site '${context.site.name}'.`,
+    );
+  }
+
+  if (result.exitCode !== 0) {
+    throw new Error(formatWpCliProcessError(context, result));
+  }
+}
+
+export function formatWpCliProcessError(
+  context: SiteContext,
+  result: Awaited<ReturnType<typeof runWpCliArgsRaw>>,
+) {
+  return [
+    `WP-CLI exited with code ${result.exitCode} for site '${context.site.name}'.`,
+    result.stdout,
+    result.stderr,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+export async function resolveWpCliExecution(context: SiteContext) {
+  const tooling = await resolveLocalTooling();
+  const pathEntries = buildWpCliPathEntries(context, tooling);
+
+  return {
+    tooling,
+    command: context.php.binaryPath,
+    argsPrefix: [tooling.wpCliPhar, `--path=${context.wpRoot}`],
+    cwd: context.wpRoot,
+    env: buildWpCliEnv(context, tooling, pathEntries),
+    pathEntries,
+  };
+}
+
 function buildWpCliEnv(
+  context: SiteContext,
+  tooling: Awaited<ReturnType<typeof resolveLocalTooling>>,
+  pathEntries: string[],
+) {
+  const env: NodeJS.ProcessEnv = {
+    ...process.env,
+    PHPRC: context.phpConfigDir,
+    WP_CLI_DISABLE_AUTO_CHECK_UPDATE: "1",
+    PATH: [...pathEntries, process.env.PATH].filter(Boolean).join(path.delimiter),
+  };
+
+  if (tooling.wpCliConfig) {
+    env.WP_CLI_CONFIG_PATH = tooling.wpCliConfig;
+  }
+
+  const phpRuntimeDir =
+    context.php.platformDirName
+      ? path.join(context.php.packageDir, "bin", context.php.platformDirName)
+      : path.dirname(context.php.binaryPath);
+  const imageMagickDir =
+    config.platform === "win32" && context.php.platformDirName
+      ? path.join(phpRuntimeDir, "ImageMagick")
+      : null;
+  const ghostscriptLibDir =
+    config.platform === "win32" && context.php.platformDirName
+      ? path.join(phpRuntimeDir, "ghostscript", "Resource", "Init")
+      : null;
+
+  if (context.magickCoderModulePath) {
+    env.MAGICK_CODER_MODULE_PATH = context.magickCoderModulePath;
+  }
+
+  if (imageMagickDir) {
+    env.MAGICK_CONFIGURE_PATH = imageMagickDir;
+  }
+
+  if (ghostscriptLibDir) {
+    env.GS_LIB = ghostscriptLibDir;
+  }
+
+  return env;
+}
+
+function buildWpCliPathEntries(
   context: SiteContext,
   tooling: Awaited<ReturnType<typeof resolveLocalTooling>>,
 ) {
@@ -88,44 +171,15 @@ function buildWpCliEnv(
     config.platform === "win32" && context.php.platformDirName
       ? path.join(phpRuntimeDir, "ghostscript", "bin")
       : null;
-  const ghostscriptLibDir =
-    config.platform === "win32" && context.php.platformDirName
-      ? path.join(phpRuntimeDir, "ghostscript", "Resource", "Init")
-      : null;
-  const env: NodeJS.ProcessEnv = {
-    ...process.env,
-    PHPRC: context.phpConfigDir,
-    WP_CLI_DISABLE_AUTO_CHECK_UPDATE: "1",
-    PATH: [
-      imageMagickDir,
-      ghostscriptBinDir,
-      path.dirname(context.mysql.binaryPath),
-      path.dirname(context.php.binaryPath),
-      path.dirname(tooling.wpCliPhar),
-      ...tooling.helperBinDirs,
-      process.env.PATH,
-    ]
-      .filter(Boolean)
-      .join(path.delimiter),
-  };
 
-  if (tooling.wpCliConfig) {
-    env.WP_CLI_CONFIG_PATH = tooling.wpCliConfig;
-  }
-
-  if (context.magickCoderModulePath) {
-    env.MAGICK_CODER_MODULE_PATH = context.magickCoderModulePath;
-  }
-
-  if (imageMagickDir) {
-    env.MAGICK_CONFIGURE_PATH = imageMagickDir;
-  }
-
-  if (ghostscriptLibDir) {
-    env.GS_LIB = ghostscriptLibDir;
-  }
-
-  return env;
+  return [
+    imageMagickDir,
+    ghostscriptBinDir,
+    path.dirname(context.mysql.binaryPath),
+    path.dirname(context.php.binaryPath),
+    path.dirname(tooling.wpCliPhar),
+    ...tooling.helperBinDirs,
+  ].filter(Boolean) as string[];
 }
 
 export function tokenizeCommand(command: string) {
